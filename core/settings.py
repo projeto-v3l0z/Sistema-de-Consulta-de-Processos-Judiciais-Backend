@@ -18,12 +18,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
 
     # Terceiros
     'rest_framework',
 
     # Aplicações próprias
     'usuario',
+    'tribunais',
 ]
 
 # Middleware
