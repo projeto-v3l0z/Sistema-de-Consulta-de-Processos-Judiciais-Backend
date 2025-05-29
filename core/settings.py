@@ -2,15 +2,15 @@ from pathlib import Path
 import os
 from datetime import timedelta  # necessário para JWT futuramente
 
-# Caminho base do projeto
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Segurança
+
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-6^kitpkq&4nkm+e-ixo=+5)!%w9@l0ka(!&h_gli#=7xevw_y6')
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if os.environ.get('DJANGO_ALLOWED_HOSTS') else []
 
-# Aplicações instaladas
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -19,14 +19,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    # Terceiros
     'rest_framework',
 
-    # Aplicações próprias
     'usuario',
 ]
 
-# Middleware
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -39,7 +36,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'core.urls'
 
-# Templates
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -58,8 +55,14 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-# Configuração de Banco de Dados: usa PostgreSQL se variáveis estiverem definidas, senão SQLite local
-if os.environ.get('POSTGRES_DB'):
+
+use_postgres = all([
+    os.environ.get('POSTGRES_DB'),
+    os.environ.get('POSTGRES_USER'),
+    os.environ.get('POSTGRES_PASSWORD'),
+])
+
+if use_postgres:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -78,7 +81,7 @@ else:
         }
     }
 
-# Validação de senha
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -94,19 +97,18 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Internacionalização
 LANGUAGE_CODE = 'pt-br'
 TIME_ZONE = 'America/Sao_Paulo'
 USE_I18N = True
 USE_TZ = True
 
-# Arquivos estáticos
+
 STATIC_URL = 'static/'
 
-# Primary key default
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Configuração do Django REST Framework (básica, customizável com JWT depois)
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.SessionAuthentication',
