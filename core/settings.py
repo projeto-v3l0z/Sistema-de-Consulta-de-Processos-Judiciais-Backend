@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'usuario',
     'processo',
     'parte',  
+    'movimentacao',
 ]
 
 # Middleware

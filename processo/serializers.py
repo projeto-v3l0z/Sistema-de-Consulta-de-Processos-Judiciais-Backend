@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Processo, Movimentacao
+from .models import Processo
 
 class ProcessoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -17,14 +17,3 @@ class ProcessoSerializer(serializers.ModelSerializer):
             'ultima_atualizacao',
             'usuario'
         ] 
-
-class MovimentacaoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Movimentacao
-        fields = [
-            'id',
-            'processo',
-            'data',
-            'descricao',
-            'observacao',
-        ]

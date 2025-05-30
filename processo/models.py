@@ -127,37 +127,3 @@ class Processo(models.Model):
         auto_now=True,
         verbose_name="Data de Atualização"
     )
-    
-class Movimentacao(models.Model):
-    id = models.UUIDField(
-        primary_key=True, 
-        editable=False, 
-        db_index=True,
-        default=uuid.uuid4,
-        verbose_name="ID",
-    )
-    processo = models.ForeignKey(
-        Processo,
-        on_delete=models.CASCADE,
-        related_name='movimentacoes',
-        verbose_name="Processo"
-    )
-    data = models.DateField(
-        default=timezone.now,
-        verbose_name="Data da Movimentação"
-    )
-    descricao = models.TextField(
-        max_length=255,
-        blank=True,
-        null=True,
-        verbose_name="Descrição da Movimentação"
-    )
-    observacao = models.TextField(
-        max_length=255,
-        blank=True,
-        null=True,
-        verbose_name="Observação"
-    )
-    
-    def __str__(self):
-        return f"{self.data.date()} - {self.descricao}"
