@@ -3,29 +3,29 @@ from django.core.validators import RegexValidator
 from django.utils import timezone
 import uuid
 
-
 class Processo(models.Model):
     id = models.UUIDField(
         primary_key=True, 
         editable=False, 
         unique=True, 
+        db_index=True,
         default=uuid.uuid4,
         verbose_name="ID",
     )
     numero_processo = models.CharField(
-        max_length=25,
+        max_length=26,
         unique=True,
+        db_index=True,
         verbose_name="Número do Processo",
         validators=[
             RegexValidator(
                 regex=r'^\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}$',
-                message="Formato inválido. Use '1234567-89.2023.0001'."
+                message="Formato inválido. Use '1234567-89.2023.8.26.0100'."
             )
         ]
     )
-    tribunal = models.ForeignKey(    #adc o tribunal quando ele tiver pronto
-        'Tribunal',
-        on_delete=models.SET_NULL,
+    tribunal = models.CharField(    #adc o tribunal quando ele tiver pronto
+        max_length=100,
         null=True,
         blank=True,
         verbose_name="Tribunal"
@@ -114,6 +114,8 @@ class Processo(models.Model):
         'auth.user', 
         on_delete=models.PROTECT,
         related_name='processos',
+        null=True, #remover esses dois mais tarde
+        blank=True,
         verbose_name="Usuário Responsável"
     )
     created_at = models.DateTimeField(
@@ -125,3 +127,37 @@ class Processo(models.Model):
         auto_now=True,
         verbose_name="Data de Atualização"
     )
+    
+class Movimentacao(models.Model):
+    id = models.UUIDField(
+        primary_key=True, 
+        editable=False, 
+        db_index=True,
+        default=uuid.uuid4,
+        verbose_name="ID",
+    )
+    processo = models.ForeignKey(
+        Processo,
+        on_delete=models.CASCADE,
+        related_name='movimentacoes',
+        verbose_name="Processo"
+    )
+    data = models.DateField(
+        default=timezone.now,
+        verbose_name="Data da Movimentação"
+    )
+    descricao = models.TextField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Descrição da Movimentação"
+    )
+    observacao = models.TextField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Observação"
+    )
+    
+    def __str__(self):
+        return f"{self.data.date()} - {self.descricao}"
