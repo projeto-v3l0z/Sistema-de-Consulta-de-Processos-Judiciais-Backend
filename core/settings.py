@@ -1,28 +1,28 @@
 from pathlib import Path
 import os
-from datetime import timedelta  # necessário para JWT futuramente
-
+from datetime import timedelta
+  # necessário para JWT futuramente
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
+# Segurança e Debug
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-6^kitpkq&4nkm+e-ixo=+5)!%w9@l0ka(!&h_gli#=7xevw_y6')
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if os.environ.get('DJANGO_ALLOWED_HOSTS') else []
 
-
 INSTALLED_APPS = [
+    'usuario',
+    'rest_framework',
+    'django_extensions',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
-    'rest_framework',
-
-    'usuario',
 ]
+
+AUTH_USER_MODEL = 'usuario.User'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -36,11 +36,10 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'core.urls'
 
-
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],  # Se quiser usar pastas de templates personalizadas, adicione aqui
+        'DIRS': [],  # Pastas de templates personalizadas podem ser adicionadas aqui
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -55,7 +54,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-
+# Configuração do banco de dados
 use_postgres = all([
     os.environ.get('POSTGRES_DB'),
     os.environ.get('POSTGRES_USER'),
@@ -81,20 +80,11 @@ else:
         }
     }
 
-
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',},
 ]
 
 LANGUAGE_CODE = 'pt-br'
@@ -102,12 +92,9 @@ TIME_ZONE = 'America/Sao_Paulo'
 USE_I18N = True
 USE_TZ = True
 
-
 STATIC_URL = 'static/'
 
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

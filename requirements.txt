@@ -1,5 +1,6 @@
 asgiref==3.8.1
 Django==5.2.1
+django-extensions==4.1
 djangorestframework==3.16.0
 dotenv==0.9.9
 psycopg==3.2.9
