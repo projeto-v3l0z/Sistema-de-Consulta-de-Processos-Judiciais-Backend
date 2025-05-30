@@ -27,6 +27,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+<<<<<<< HEAD
+=======
+    # Terceiros
+    'rest_framework',
+
+    # Aplicações próprias
+    'tribunais',
+>>>>>>> edcc590 (2 commit de tribunais com remoção de usuario e view7)
 ]
 
 # Middleware
