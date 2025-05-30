@@ -115,3 +115,6 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.AllowAny',
     )
 }
+
+# Configuração de autenticação personalizada
+AUTH_USER_MODEL = 'usuario.User'
