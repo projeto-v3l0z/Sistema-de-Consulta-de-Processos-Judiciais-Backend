@@ -1,8 +1,12 @@
 # tribunais/urls.py
-from django.urls import path
-from .views import TribunalListView, TribunalDetailView
+from django.urls import include, path
+from rest_framework.routers import DefaultRouter
+from .views import TribunalViewSet
+
+
+router = DefaultRouter()
+router.register(r'tribunais', TribunalViewSet, basename='tribunal')
 
 urlpatterns = [
-    path('tribunais/', TribunalListView.as_view(), name='tribunal-list'),
-    path('tribunais/<uuid:id>/', TribunalDetailView.as_view(), name='tribunal-detail'),
+    path('', include(router.urls)),
 ]

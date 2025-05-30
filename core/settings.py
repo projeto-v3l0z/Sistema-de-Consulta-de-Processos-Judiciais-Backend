@@ -24,7 +24,6 @@ INSTALLED_APPS = [
     'rest_framework',
 
     # Aplicações próprias
-    'usuario',
     'tribunais',
 ]
 
