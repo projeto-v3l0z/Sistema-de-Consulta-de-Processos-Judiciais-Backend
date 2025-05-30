@@ -2,6 +2,8 @@ from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import Processo, Movimentacao
 from .serializers import ProcessoSerializer, MovimentacaoSerializer
+from parte.models import Parte
+from parte.serializers import ParteSerializer
 from django.utils import timezone
 
 
@@ -48,3 +50,11 @@ class MovimentacaoListView(generics.ListAPIView):
     def get_queryset(self):
         processo_id = self.kwargs['pk']
         return Movimentacao.objects.filter(processo_id=processo_id).order_by('-data')
+
+# Partes
+class ParteListView(generics.ListAPIView):
+    serializer_class = ParteSerializer
+
+    def get_queryset(self):
+        processo_id = self.kwargs['pk']
+        return Parte.objects.filter(processo_id=processo_id)

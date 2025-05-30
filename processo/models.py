@@ -110,8 +110,8 @@ class Processo(models.Model):
         blank=True,
         verbose_name="Última Atualização"
     )
-    usuario = models.ForeignKey(   # adc o usuario quando ele tiver pronto
-        'auth.user', 
+    usuario = models.ForeignKey(  
+        'usuario.User', 
         on_delete=models.PROTECT,
         related_name='processos',
         null=True, #remover esses dois mais tarde
