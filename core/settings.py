@@ -122,7 +122,7 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # tempo de validade do token de acesso
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),   # tempo de validade do token de refresh
     'ROTATE_REFRESH_TOKENS': False,
-    #'BLACKLIST_AFTER_ROTATION': True,
+    'BLACKLIST_AFTER_ROTATION': False,
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,  # normalmente já é sua chave secreta do Django
     'AUTH_HEADER_TYPES': ('Bearer',),
