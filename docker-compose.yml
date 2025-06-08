@@ -2,7 +2,7 @@
 
 services:
   db:
-    container_name: scpj_postgress
+    container_name: SCPJ_postgres
     image: postgres:15-alpine
     restart: unless-stopped
     environment:
@@ -15,9 +15,10 @@ services:
       - "5432:5432"
 
   web:
-    container_name: scpj_django
+    container_name:  SCPJ_django
     build: .
     command: python manage.py runserver 0.0.0.0:8000
+    user: "v3loz"
     volumes:
       - .:/app
     ports:
@@ -31,6 +32,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
+      
     depends_on:
       - db
 
