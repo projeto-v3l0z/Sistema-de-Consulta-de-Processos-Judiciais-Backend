@@ -12,6 +12,7 @@ ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if os.envi
 
 INSTALLED_APPS = [
     'usuario',
+    'tribunais',
     'rest_framework',
     'django_extensions',
     'django.contrib.admin',
