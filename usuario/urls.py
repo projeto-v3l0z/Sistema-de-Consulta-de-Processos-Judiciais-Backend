@@ -6,7 +6,7 @@ router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
 
 urlpatterns = [
-    path('router/', include(router.urls)),
+    path('', include(router.urls)),
     path('hello/', hello_world),
     path('protegida/', RotaProtegidaView.as_view(), name='rota_protegida'),
     

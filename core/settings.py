@@ -13,6 +13,10 @@ ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if os.envi
 INSTALLED_APPS = [
     'usuario',
     'tribunais',
+    'processo',
+    'movimentacao',
+    'parte',
+    'rest_framework_simplejwt',
     'rest_framework',
     'django_extensions',
     'django.contrib.admin',
@@ -119,3 +123,5 @@ SIMPLE_JWT = {
     'SIGNING_KEY': SECRET_KEY,  # normalmente já é sua chave secreta do Django
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+
