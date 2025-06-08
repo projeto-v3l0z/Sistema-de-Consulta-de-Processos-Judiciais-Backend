@@ -16,6 +16,7 @@ INSTALLED_APPS = [
     'processo',
     'movimentacao',
     'parte',
+    'drf_yasg',
     'rest_framework_simplejwt',
     'rest_framework',
     'django_extensions',
