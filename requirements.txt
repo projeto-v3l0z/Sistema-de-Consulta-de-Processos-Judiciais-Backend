@@ -2,6 +2,7 @@ asgiref==3.8.1
 Django==5.2.1
 django-extensions==4.1
 djangorestframework==3.16.0
+djangorestframework-simplejwt
 psycopg==3.2.9
 python-dotenv==1.1.0
 sqlparse==0.5.3

@@ -21,7 +21,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
 ]
+
+# Middleware
 
 AUTH_USER_MODEL = 'usuario.User'
 
@@ -99,12 +102,20 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.AllowAny',
+        'rest_framework.permissions.AllowAny',  
     )
+
 }
 
-# Configuração de autenticação personalizada
-AUTH_USER_MODEL = 'usuario.User'
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # tempo de validade do token de acesso
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),   # tempo de validade do token de refresh
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': False,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,  # normalmente já é sua chave secreta do Django
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
