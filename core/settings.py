@@ -1,35 +1,38 @@
 from pathlib import Path
 import os
-from datetime import timedelta  # necessário para JWT futuramente
+from datetime import timedelta
+  # necessário para JWT futuramente
 
-# Caminho base do projeto
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Segurança
+# Segurança e Debug
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-6^kitpkq&4nkm+e-ixo=+5)!%w9@l0ka(!&h_gli#=7xevw_y6')
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if os.environ.get('DJANGO_ALLOWED_HOSTS') else []
 
-# Aplicações instaladas
 INSTALLED_APPS = [
+    'usuario',
+    'tribunais',
+    'processo',
+    'movimentacao',
+    'parte',
+    'drf_yasg',
+    'rest_framework_simplejwt',
+    'rest_framework',
+    'django_extensions',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
-    # Terceiros
-    'rest_framework',
 
-    # Aplicações próprias
-    'usuario',
-    'processo',
-    'parte',  
-    'movimentacao',
 ]
 
 # Middleware
+
+AUTH_USER_MODEL = 'usuario.User'
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -42,11 +45,10 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'core.urls'
 
-# Templates
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],  # Se quiser usar pastas de templates personalizadas, adicione aqui
+        'DIRS': [],  # Pastas de templates personalizadas podem ser adicionadas aqui
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -61,8 +63,14 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-# Configuração de Banco de Dados: usa PostgreSQL se variáveis estiverem definidas, senão SQLite local
-if os.environ.get('POSTGRES_DB'):
+# Configuração do banco de dados
+use_postgres = all([
+    os.environ.get('POSTGRES_DB'),
+    os.environ.get('POSTGRES_USER'),
+    os.environ.get('POSTGRES_PASSWORD'),
+])
+
+if use_postgres:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -81,42 +89,40 @@ else:
         }
     }
 
-# Validação de senha
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',},
 ]
 
-# Internacionalização
 LANGUAGE_CODE = 'pt-br'
 TIME_ZONE = 'America/Sao_Paulo'
 USE_I18N = True
 USE_TZ = True
 
-# Arquivos estáticos
 STATIC_URL = 'static/'
 
-# Primary key default
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Configuração do Django REST Framework (básica, customizável com JWT depois)
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.AllowAny',
+        'rest_framework.permissions.AllowAny',  
     )
+
 }
 
-AUTH_USER_MODEL = 'usuario.User'
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # tempo de validade do token de acesso
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),   # tempo de validade do token de refresh
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': False,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,  # normalmente já é sua chave secreta do Django
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
+
