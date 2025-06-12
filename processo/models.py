@@ -63,6 +63,7 @@ class Processo(models.Model):
         verbose_name="Valor da Causa"
     )
     
+    #criar class e declararo os campos 
     SITUACAO_CHOICES = [    # pesquisei todas as siglas, talvez precise de ajustes
                         
         # Fases Iniciais
