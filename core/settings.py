@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
 
 ]
 
@@ -41,6 +42,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
 ]
 
 ROOT_URLCONF = 'core.urls'
@@ -124,5 +126,19 @@ SIMPLE_JWT = {
     'SIGNING_KEY': SECRET_KEY,  # normalmente já é sua chave secreta do Django
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": os.getenv("REDIS_URL", "redis://redis:6379/0"),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "SERIALIZER": "django_redis.serializers.pickle.PickleSerializer",
+        },
+        "TIMEOUT": 60 * 60,      # 1 h (pode ser sobrescrito por view)
+    }
+}
+
+RATELIMIT_USE_CACHE = "default"
 
 
