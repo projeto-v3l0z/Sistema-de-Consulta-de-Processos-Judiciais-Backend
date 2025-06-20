@@ -28,7 +28,7 @@ class RotaProtegidaView(APIView):
                 "mensagem": f"Olá {request.user.username}, você está autenticado com JWT!"
             })
 
-#View que usei pra testar o rate limit
+#View que usei pra testar o rate limit e o cache
 from django.views.decorators.cache import cache_page
 
 @api_view(["GET"])
