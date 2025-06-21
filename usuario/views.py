@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from .permissions import PodeCadastrarProcessos, PodeVisualizarProcessos
 from django.http import HttpResponse
-from django_ratelimit.decorators import ratelimit
+
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -30,13 +30,16 @@ class RotaProtegidaView(APIView):
 
 #View que usei pra testar o rate limit e o cache
 from django.views.decorators.cache import cache_page
+from django_ratelimit.decorators import ratelimit
+from core.ratelimit_preset import Generico  # Importando o preset personalizado
 
 @api_view(["GET"])
-@cache_page(30)                      # 30 s de cache
-@ratelimit(key="ip", rate="1/m", block=True)  
+@cache_page(30) # 30 s de cache
+@ratelimit(key="ip", rate=Generico, block=True)
 def hello_world(request):
     print(">>> executou a view (só aparece 1x a cada 30 s)")
     return Response({"message": "Olá, mundo!"})
+
 
 
 # apenas testando as permissões
