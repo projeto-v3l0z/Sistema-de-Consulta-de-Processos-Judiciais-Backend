@@ -16,6 +16,8 @@ from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 
+from integrations.datajud_adapter import DatajudAdapter
+from integrations.tjsp_adapter import TJSPAdapter
 
 # botei pra testar se lembra de mudar os permissoes depois quando tiver usuarios
 AUTH_ON = False
@@ -91,3 +93,30 @@ class ProcessoForcarAtualizacaoView(APIView):
         processo.save()
         serializer = ProcessoSerializer(processo)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
+# Exemplo de views para consulta ao Datajud
+class ConsultaDatajudNumeroView(APIView):
+    def get(self, request):
+        numero = request.query_params.get('numero') # Obtém o número do processo dos parâmetros da requisição
+        resultado = DatajudAdapter().consultar_por_numero(numero) 
+        return Response(resultado)
+    
+class ConsultaDatajudDocumentoView(APIView):
+    def get(self, request):
+        documento = request.query_params.get('documento')  # Obtém o CPF ou CNPJ dos parâmetros da requisição
+        resultado = DatajudAdapter().consultar_por_documento(documento)
+        return Response(resultado)
+    
+# Exemplo de views para consulta ao TJSP
+class ConsultaTJSPNumeroView(APIView):
+    def get(self, request):
+        numero = request.query_params.get('numero')  # Obtém o número do processo dos parâmetros da requisição
+        resultado = TJSPAdapter().consultar_por_numero(numero)
+        return Response(resultado)
+    
+class ConsultaTJSPDocumentoView(APIView):
+    def get(self, request):
+        documento = request.query_params.get('documento')  # Obtém o CPF ou CNPJ dos parâmetros da requisição
+        resultado = TJSPAdapter().consultar_por_documento(documento)
+        return Response(resultado)
