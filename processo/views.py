@@ -1,10 +1,13 @@
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.views import APIView
+from rest_framework.views import APIView 
 from rest_framework.response import Response
+#from .adapters import datajud, tjsp, tjrj
+from processo.adapters.datajud import buscar_processo_datajud
+
 
 from .models import Processo
-from .serializers import ProcessoSerializer
+from .serializers import ProcessoSerializer, ProcessoBuscaSerializer
 
 from movimentacao.models import Movimentacao
 from movimentacao.serializers import MovimentacaoSerializer
@@ -16,6 +19,8 @@ from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 
+
+from .services import buscar_processo_com_fallback
 
 # botei pra testar se lembra de mudar os permissoes depois quando tiver usuarios
 AUTH_ON = False
@@ -91,3 +96,18 @@ class ProcessoForcarAtualizacaoView(APIView):
         processo.save()
         serializer = ProcessoSerializer(processo)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+
+# busca por numero de processo
+
+class BuscaProcessoView(APIView):
+    def post(self, request):
+        serializer = ProcessoBuscaSerializer(data=request.data)
+        if serializer.is_valid():
+            numero = serializer.validated_data['numero_processo']
+            resultado = buscar_processo_com_fallback(numero)
+            if resultado:
+                return Response(resultado, status=status.HTTP_200_OK)
+            return Response({"detail": "Processo não encontrado em nenhuma fonte."}, status=status.HTTP_404_NOT_FOUND)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    

@@ -4,7 +4,7 @@ from .views import (
     ProcessoRetrieveUpdateDestroyView,
     MovimentacaoListView,
     ParteListView,
-    ProcessoBuscaView,
+    BuscaProcessoView,
     ProcessoForcarAtualizacaoView,
 )
 
@@ -13,6 +13,8 @@ urlpatterns = [
     path('<uuid:pk>/', ProcessoRetrieveUpdateDestroyView.as_view(), name='processo-detail'),
     path('<uuid:pk>/movimentacoes/', MovimentacaoListView.as_view(), name='movimentacao-list'),
     path('<uuid:pk>/partes/', ParteListView.as_view(), name='parte-list'),
-    path('busca/', ProcessoBuscaView.as_view(), name='processo-busca'),
+    path('buscar/', BuscaProcessoView.as_view(), name='busca-processo'),
     path('<uuid:pk>/atualizar/', ProcessoForcarAtualizacaoView.as_view(), name='processo-forcar-atualizacao'),
 ]
+
+# busca_processo
