@@ -113,8 +113,6 @@ class Processo(models.Model):
         'usuario.User', 
         on_delete=models.PROTECT,
         related_name='processos',
-        null=True, #remover esses dois mais tarde
-        blank=True,
         verbose_name="Usuário Responsável"
     )
     created_at = models.DateTimeField(
