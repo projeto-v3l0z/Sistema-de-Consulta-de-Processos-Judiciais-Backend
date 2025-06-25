@@ -2,11 +2,13 @@ from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView 
 from rest_framework.response import Response
+from django_filters.rest_framework import DjangoFilterBackend
 #from .adapters import datajud, tjsp, tjrj
 from processo.adapters.datajud import buscar_processo_datajud
 
 
 from .models import Processo
+from .filters import ProcessoFilter
 from .serializers import ProcessoSerializer, ProcessoBuscaSerializer
 
 from movimentacao.models import Movimentacao
@@ -29,22 +31,11 @@ AUTH_ON = False
 
 # create & List
 class ProcessoListCreateView(generics.ListCreateAPIView):
-    queryset = Processo.objects.all()
+    queryset = Processo.objects.all().order_by('-created_at')
     serializer_class = ProcessoSerializer
     permission_classes = [AllowAny] if not AUTH_ON else [IsAuthenticated]
-    
-    def get_queryset(self):
-        queryset = Processo.objects.all()  # Processo.objects.filter(usuario=self.request.user)
-        tribunal = self.request.query_params.get('tribunal', None)
-        numero = self.request.query_params.get('numero', None)
-        situacao = self.request.query_params.get('situacao', None)
-        if tribunal:
-            queryset = queryset.filter(tribunal=tribunal)
-        if numero:
-            queryset = queryset.filter(numero_processo__icontains=numero)
-        if situacao:
-            queryset = queryset.filter(situacao_atual=situacao)
-        return queryset.order_by('-created_at')
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = ProcessoFilter
 
 # Read & Update & Delete
 class ProcessoRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):

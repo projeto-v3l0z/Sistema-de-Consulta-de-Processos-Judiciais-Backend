@@ -16,6 +16,8 @@ RUN useradd -ms /bin/bash v3loz
 
 COPY . .
 
+RUN chown -R v3loz:v3loz /app
+
 COPY .bashrc /home/v3loz/.bashrc
 RUN chown v3loz:v3loz /home/v3loz/.bashrc
 
@@ -23,4 +25,3 @@ RUN chown v3loz:v3loz /home/v3loz/.bashrc
 EXPOSE 8000
 
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
-
