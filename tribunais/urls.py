@@ -8,5 +8,6 @@ router = DefaultRouter()
 router.register(r'tribunais', TribunalViewSet, basename='tribunal')
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path('', TribunalListView.as_view(), name='tribunal-list'),
+    path('<uuid:id>/', TribunalDetailView.as_view(), name='tribunal-detail'),
 ]
