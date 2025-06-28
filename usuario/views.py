@@ -6,7 +6,9 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from .permissions import PodeCadastrarProcessos, PodeVisualizarProcessos
 from django.http import HttpResponse
-
+from rest_framework_simplejwt.views import TokenObtainPairView
+from .serializers import MyTokenObtainPairSerializer
+from django.shortcuts import render
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -50,3 +52,9 @@ def teste(request):
         return HttpResponse("Você tem permissão.")
     else:
         return HttpResponse("Você não tem permissão.")
+    
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
+
+def login_page_view(request):
+    return render(request, 'usuario/login.html')
