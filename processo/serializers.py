@@ -2,6 +2,9 @@ from rest_framework import serializers
 from .models import Processo
 
 class ProcessoSerializer(serializers.ModelSerializer):
+    # Caso queira expor a descricao tambem
+    situacao_atual_descricao = serializers.SerializerMethodField()
+
     class Meta:
         model = Processo
         fields = [
@@ -13,7 +16,11 @@ class ProcessoSerializer(serializers.ModelSerializer):
             'data_distribuicao',
             'orgao_julgador',
             'valor_causa',
-            'situacao_atual',
+            'situacao_atual',            
+            'situacao_atual_descricao',  # Somente para explicar melhor a sigla
             'ultima_atualizacao',
-            'usuario'
-        ] 
+            'usuario',
+        ]
+
+    def get_situacao_atual_descricao(self, obj):
+        return obj.get_situacao_atual_display()
