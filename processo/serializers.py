@@ -17,9 +17,8 @@ class ProcessoSerializer(serializers.ModelSerializer):
             'orgao_julgador',
             'valor_causa',
             'situacao_atual',            
-            'situacao_atual_descricao',  # Somente para explicar melhor a sigla
+            'situacao_atual_descricao',  
             'ultima_atualizacao',
-            'usuario',
         ]
 
     def get_situacao_atual_descricao(self, obj):
