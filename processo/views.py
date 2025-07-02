@@ -19,6 +19,11 @@ from django.db.models import Q
 from integrations.datajud_adapter import DatajudAdapter
 from integrations.tjsp_adapter import TJSPAdapter
 
+from django.db import connections
+from django.db.utils import OperationalError
+import redis
+from django.core.cache import cache
+
 # botei pra testar se lembra de mudar os permissoes depois quando tiver usuarios
 AUTH_ON = False
 
@@ -125,3 +130,34 @@ class ConsultaTJSPDocumentoView(APIView):
         documento = request.query_params.get('documento')  # Obtém o CPF ou CNPJ dos parâmetros da requisição
         resultado = TJSPAdapter().consultar_por_documento(documento)
         return Response(resultado)
+    
+
+class HealthCheckView(APIView):
+    def get(self, request):
+        health = {}
+
+        # PostgreSQL
+        try:
+            connections['default'].cursor() # Testa a conexão com o banco de dados
+            health['postgresql'] = 'ok'
+        except OperationalError: # OperationalError é lançado se a conexão falhar
+            health['postgresql'] = 'unavailable'
+
+        # Redis
+        try:
+            r = redis.Redis.from_url('redis://redis:6379/0')
+            r.ping()
+            health['redis'] = 'ok'
+        except Exception:
+            health['redis'] = 'unavailable'
+
+        # Cache
+        try:
+            cache.set('health_check', 'ok', timeout=5) # Define um valor no cache para testar
+            value = cache.get('health_check')
+            health['cache'] = 'ok' if value == 'ok' else 'unavailable' # Verifica se o valor no cache é o esperado
+        except Exception:
+            health['cache'] = 'unavailable'
+
+        # Retorna 200 se tudo estiver ok, 503 se algum serviço estiver indisponível
+        return Response(health, status=status.HTTP_200_OK if all(v == 'ok' for v in health.values()) else status.HTTP_503_SERVICE_UNAVAILABLE) 
