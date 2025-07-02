@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f0f2f5; }
+        .login-container { padding: 2rem; background: white; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 300px; }
+        h2 { text-align: center; color: #333; }
+        .input-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.5rem; }
+        input { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 0.7rem; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem; }
+        button:hover { background-color: #0056b3; }
+        #error-feedback { color: red; margin-top: 1rem; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <h2>Login</h2>
+        <form id="login-form">
+            <div class="input-group">
+                <label for="email">E-mail</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="input-group">
+                <label for="password">Senha</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit">Entrar</button>
+        </form>
+        <div id="error-feedback"></div>
+    </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', async function(event) {
+            // Impede o envio padrão do formulário
+            event.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('error-feedback');
+            errorDiv.textContent = ''; // Limpa erros anteriores
+
+            // Validação de campos obrigatórios
+            if (!email || !password) {
+                errorDiv.textContent = 'E-mail e senha são obrigatórios.';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/usuarios/token/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    // Feedback para erro de autenticação
+                    throw new Error(data.detail || 'Erro de autenticação.');
+                }
+
+                // Login bem-sucedido!
+                console.log('Tokens recebidos:', data);
+                localStorage.setItem('accessToken', data.access);
+                localStorage.setItem('refreshToken', data.refresh);
+                
+                // Redireciona para uma página protegida (ex: dashboard)
+                // window.location.href = '/caminho/para/dashboard'; 
+                alert('Login realizado com sucesso! Tokens salvos no Local Storage.');
+
+            } catch (error) {
+                console.error('Erro no login:', error);
+                errorDiv.textContent = error.message;
+            }
+        });
+    </script>
+
+</body>
+</html>

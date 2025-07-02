@@ -1,5 +1,3 @@
-
-
 services:
   db:
     container_name: SCPJ_postgres
@@ -14,8 +12,15 @@ services:
     ports:
       - "5432:5432"
 
+  redis:                      
+    container_name: SCPJ_redis
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:                     
+      - "6379:6379"
+
   web:
-    container_name:  SCPJ_django
+    container_name: SCPJ_django
     build: .
     command: python manage.py runserver 0.0.0.0:8000
     user: "v3loz"
@@ -32,9 +37,10 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
-      
+     
     depends_on:
       - db
+      - redis               
 
 volumes:
   postgres_data:

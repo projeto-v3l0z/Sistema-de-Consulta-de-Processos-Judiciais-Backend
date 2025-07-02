@@ -1,7 +1,6 @@
 # 🚀 SCPJ - Projeto Django com Docker
 
 Este projeto é uma API desenvolvida em Django, containerizada com Docker, utilizando PostgreSQL como banco de dados.  
-Conta com autenticação via JWT, documentação interativa com Swagger e está pronta para testes e desenvolvimento local.
 
 ## 🧩 Tecnologias utilizadas
 
