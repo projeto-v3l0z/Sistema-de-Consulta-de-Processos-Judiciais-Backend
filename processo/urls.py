@@ -6,6 +6,7 @@ from .views import (
     ParteListView,
     ProcessoBuscaView,
     ProcessoForcarAtualizacaoView,
+    ProcessoBuscaDocumentoView
 )
 
 urlpatterns = [
@@ -15,4 +16,5 @@ urlpatterns = [
     path('<uuid:pk>/partes/', ParteListView.as_view(), name='parte-list'),
     path('busca/', ProcessoBuscaView.as_view(), name='processo-busca'),
     path('<uuid:pk>/atualizar/', ProcessoForcarAtualizacaoView.as_view(), name='processo-forcar-atualizacao'),
+    path('busca-documento/', ProcessoBuscaDocumentoView.as_view(), name='processo-busca-documento'),
 ]

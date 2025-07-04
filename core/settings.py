@@ -26,18 +26,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
-<<<<<<< HEAD
-=======
-    # Terceiros
-    'rest_framework',
-
-    # Aplicações próprias
-    'tribunais',
->>>>>>> edcc590 (2 commit de tribunais com remoção de usuario e view7)
 ]
 
-# Middleware
+#Middleware
 
 AUTH_USER_MODEL = 'usuario.User'
 
@@ -49,7 +40,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-]
+ ]
 
 ROOT_URLCONF = 'core.urls'
 

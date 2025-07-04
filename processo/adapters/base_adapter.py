@@ -13,3 +13,11 @@ class BaseAdapter(ABC):
     def to_standard_format(self, raw_data: dict) -> ProcessoDTO:
         """Converte o raw_data para ProcessoDTO."""
         pass
+
+    @abstractmethod
+    def consultar_por_documento(self, documento: str) -> list[ProcessoDTO]:
+        """
+        Vem uma string de CPF ou CNPJ, retorna uma lista de ProcessoDTO
+        de todos os processos em que esse documento aparece como parte.
+        """
+        pass

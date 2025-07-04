@@ -22,3 +22,9 @@ class DatajudAdapter(BaseAdapter):
             orgao_julgador=raw_data.get("orgao", ""),
             situacao_atual=raw_data.get("situacao", ""),
         )
+
+    def consultar_por_documento(self, documento: str) -> list[ProcessoDTO]:
+        resp = requests.get(f"{self.BASE_URL}por-documento/{documento}")
+        resp.raise_for_status()
+        raw_list = resp.json().get('processos', [])
+        return [ self.to_standard_format(raw) for raw in raw_list ]
