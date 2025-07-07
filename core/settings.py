@@ -17,12 +17,12 @@ ALLOWED_HOSTS = ALLOWED_HOSTS_str.split(',') if ALLOWED_HOSTS_str else []
 
 INSTALLED_APPS = [
     # Django Core 
-    'django.contrib.admin',
-    'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.auth',
+    'django.contrib.admin',
 
     # Apps
     'rest_framework',

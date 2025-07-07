@@ -50,20 +50,42 @@ class ProcessoRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         serializer.save(updated_at=timezone.now())
 
 # movimentacao
-class MovimentacaoListView(generics.ListAPIView):
+class MovimentacaoListCreateView(generics.ListCreateAPIView):
     serializer_class = MovimentacaoSerializer
     
     def get_queryset(self):
-        processo_id = self.kwargs['pk']
-        return Movimentacao.objects.filter(processo_id=processo_id).order_by('-data_movimentacao')
+        get_object_or_404(Processo, pk=self.kwargs['pk'])
+        return Movimentacao.objects.filter(processo_id=self.kwargs['pk']).order_by('-data_movimentacao')
+
+    def perform_create(self, serializer):
+        processo = get_object_or_404(Processo, pk=self.kwargs['pk'])
+        serializer.save(processo=processo)
 
 # Partes
-class ParteListView(generics.ListAPIView):
+class ParteListCreateView(generics.ListCreateAPIView):
     serializer_class = ParteSerializer
 
     def get_queryset(self):
-        processo_id = self.kwargs['pk']
-        return Parte.objects.filter(processo_id=processo_id)
+        get_object_or_404(Processo, pk=self.kwargs['pk'])
+        return Parte.objects.filter(processo_id=self.kwargs['pk'])
+
+    def perform_create(self, serializer):
+        processo = get_object_or_404(Processo, pk=self.kwargs['pk'])
+        serializer.save(processo=processo)
+
+class ParteRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = ParteSerializer
+
+    def get_queryset(self):
+        return Parte.objects.filter(processo_id=self.kwargs['processo_pk'])
+
+class MovimentacaoRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = MovimentacaoSerializer
+
+    def get_queryset(self):
+        return Movimentacao.objects.filter(processo_id=self.kwargs['processo_pk'])
+
+
     
 # Forçar Atualização
 class ProcessoForcarAtualizacaoView(APIView):
@@ -87,4 +109,6 @@ class BuscaProcessoView(APIView):
                 return Response(resultado, status=status.HTTP_200_OK)
             return Response({"detail": "Processo não encontrado em nenhuma fonte."}, status=status.HTTP_404_NOT_FOUND)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
     
