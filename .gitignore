@@ -1,12 +1,13 @@
-cat > .gitignore <<EOF
 # Python
 __pycache__/
 *.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Virtual envs
 env/
 venv/
 .venv/
-*.egg-info/
-.pytest_cache/
 
 # Django
 *.log
@@ -14,9 +15,11 @@ venv/
 *.pyc
 db.sqlite3
 media/
+staticfiles/
 
-# Environment
-.env
+# Environment files
+.env*
+!.env.example
 
 # IDEs
 .vscode/
@@ -24,4 +27,8 @@ media/
 
 # OS
 .DS_Store
-EOF
+Thumbs.db
+
+# Docker
+Docker/prod/
+docker-compose.prod.yml
