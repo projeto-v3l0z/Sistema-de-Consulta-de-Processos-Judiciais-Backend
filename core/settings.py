@@ -16,6 +16,7 @@ INSTALLED_APPS = [
     'processo',
     'movimentacao',
     'parte',
+    'core',
     'drf_yasg',
     'rest_framework_simplejwt',
     'rest_framework',
@@ -44,11 +45,13 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'core.urls'
+STATIC_URL = '/static/'
+STATIC_ROOT = '/app/static'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],  # Pastas de templates personalizadas podem ser adicionadas aqui
+        'DIRS': [],  
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
