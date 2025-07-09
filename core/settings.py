@@ -16,6 +16,7 @@ INSTALLED_APPS = [
     'processo',
     'movimentacao',
     'parte',
+    'core',
     'drf_yasg',
     'rest_framework_simplejwt',
     'rest_framework',
@@ -40,14 +41,17 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
- ]
+    
+]
 
 ROOT_URLCONF = 'core.urls'
+STATIC_URL = '/static/'
+STATIC_ROOT = '/app/static'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],  # Pastas de templates personalizadas podem ser adicionadas aqui
+        'DIRS': [],  
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -123,5 +127,19 @@ SIMPLE_JWT = {
     'SIGNING_KEY': SECRET_KEY,  # normalmente já é sua chave secreta do Django
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": os.getenv("REDIS_URL", "redis://redis:6379/0"),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "SERIALIZER": "django_redis.serializers.pickle.PickleSerializer",
+        },
+        "TIMEOUT": 60 * 60,      # 1 h (pode ser sobrescrito por view)
+    }
+}
+
+RATELIMIT_USE_CACHE = "default"
 
 

@@ -21,9 +21,24 @@ from movimentacao.serializers import MovimentacaoSerializer
 from parte.models import Parte
 from parte.serializers import ParteSerializer
 
-AUTH_ON = False  # Carlos lembrar pfvr de muda pra True quando tiver em produção
+from django.utils import timezone
+from django.shortcuts import get_object_or_404
+from django.db.models import Q
 
+from integrations.datajud_adapter import DatajudAdapter
+from integrations.tjsp_adapter import TJSPAdapter
 
+# botei pra testar se lembra de mudar os permissoes depois quando tiver usuarios
+AUTH_ON = False
+
+# CRUD
+from core.ratelimit_preset import Generico
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django_ratelimit.decorators import ratelimit
+# create & List
+@method_decorator(cache_page(30), name="get")
+@method_decorator(ratelimit(key="ip", rate='10/m', block=True), name="get")
 class ProcessoListCreateView(generics.ListCreateAPIView):
     queryset = Processo.objects.all()
     serializer_class = ProcessoSerializer
@@ -204,98 +219,34 @@ class ProcessoForcarAtualizacaoView(APIView):
 
     def post(self, request, pk):
         processo = get_object_or_404(Processo, pk=pk)
-        fonte = request.query_params.get('fonte')
-        if fonte not in ('datajud', 'tjsp', 'trj'):
-            return Response(
-                {'error': 'fonte inválida. Use datajud, tjsp ou trj.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        try:
-            dto = get_processo(processo.numero_processo, fonte)
-            
-            processo.tribunal           = dto.tribunal
-            processo.classe_processual  = dto.classe_processual
-            processo.assunto            = dto.assunto
-            processo.data_distribuicao  = dto.data_distribuicao
-            processo.orgao_julgador     = dto.orgao_julgador
-            processo.situacao_atual     = dto.situacao_atual
-            processo.ultima_atualizacao = timezone.now()
-            processo.save()
+        processo.ultima_atualizacao = timezone.now()
+        processo.save()
+        serializer = ProcessoSerializer(processo)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
 
-            data = {
-                "numero_processo":   processo.numero_processo,
-                "tribunal":          processo.tribunal,
-                "classe_processual": processo.classe_processual,
-                "assunto":           processo.assunto,
-                "data_distribuicao": processo.data_distribuicao,
-                "orgao_julgador":    processo.orgao_julgador,
-                "situacao_atual":    processo.situacao_atual,
-            }
-            serializer = StandardProcessoSerializer(data)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-        except Exception as e:
-            return Response(
-                {'error': str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-class ProcessoBuscaDocumentoView(APIView):
-    """
-    Busca processos pelo CPF ou CNPJ de uma parte.
-    """
-    permission_classes = [AllowAny] if not AUTH_ON else [IsAuthenticated]
-
-    @swagger_auto_schema(request_body=openapi.Schema(
-        type=openapi.TYPE_OBJECT,
-        properties={'documento': openapi.Schema(type=openapi.TYPE_STRING)}
-    ))
-    def post(self, request):
-        documento = request.data.get('documento', '').strip()
-        # Validação básica de CPF (11 dígitos) ou CNPJ (14 dígitos)
-        if not re.fullmatch(r'\d{11}|\d{14}', documento):
-            return Response(
-                {'error': 'Documento inválido. Informe um CPF (11 dígitos) ou CNPJ (14 dígitos).'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # Chama o serviço que delega ao adaptador correto
-        try:
-            
-            fonte = request.query_params.get('fonte')
-            if fonte:
-                dtos = consultar_processos_por_documento(documento, fonte)
-            else:
-                # se não passou fonte, consulta em todas
-                from .services import ADAPTERS
-                dtos = []
-                for key, adapter in ADAPTERS.items():
-                    try:
-                        dtos.extend(adapter.consultar_por_documento(documento))
-                    except Exception:
-                        continue
-            
-            data = [
-                {
-                    "numero_processo":   dto.numero_processo,
-                    "tribunal":          dto.tribunal,
-                    "classe_processual": dto.classe_processual,
-                    "assunto":           dto.assunto,
-                    "data_distribuicao": dto.data_distribuicao,
-                    "orgao_julgador":    dto.orgao_julgador,
-                    "situacao_atual":    dto.situacao_atual,
-                }
-                for dto in dtos
-            ]
-            serializer = StandardProcessoSerializer(data, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-        except ValueError as e:
-            # Fonte inválida ou outro erro previsível
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception:
-            # Qualquer outra falha (timeout, parse, etc)
-            return Response(
-                {'error': 'Erro interno ao consultar processos por documento.'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+# Exemplo de views para consulta ao Datajud
+class ConsultaDatajudNumeroView(APIView):
+    def get(self, request):
+        numero = request.query_params.get('numero') # Obtém o número do processo dos parâmetros da requisição
+        resultado = DatajudAdapter().consultar_por_numero(numero) 
+        return Response(resultado)
+    
+class ConsultaDatajudDocumentoView(APIView):
+    def get(self, request):
+        documento = request.query_params.get('documento')  # Obtém o CPF ou CNPJ dos parâmetros da requisição
+        resultado = DatajudAdapter().consultar_por_documento(documento)
+        return Response(resultado)
+    
+# Exemplo de views para consulta ao TJSP
+class ConsultaTJSPNumeroView(APIView):
+    def get(self, request):
+        numero = request.query_params.get('numero')  # Obtém o número do processo dos parâmetros da requisição
+        resultado = TJSPAdapter().consultar_por_numero(numero)
+        return Response(resultado)
+    
+class ConsultaTJSPDocumentoView(APIView):
+    def get(self, request):
+        documento = request.query_params.get('documento')  # Obtém o CPF ou CNPJ dos parâmetros da requisição
+        resultado = TJSPAdapter().consultar_por_documento(documento)
+        return Response(resultado)
