@@ -1,5 +1,6 @@
 from rest_framework import generics, status
 from rest_framework.views import APIView
+from django.views.generic import ListView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
@@ -250,3 +251,12 @@ class ConsultaTJSPDocumentoView(APIView):
         documento = request.query_params.get('documento')  # Obtém o CPF ou CNPJ dos parâmetros da requisição
         resultado = TJSPAdapter().consultar_por_documento(documento)
         return Response(resultado)
+    
+
+#Views da renderização
+class ProcessoListViewHTML(ListView):
+    model = Processo
+    template_name = 'processo/listProcessoView.html'    
+    context_object_name = 'processo'         
+    paginate_by = 20                         
+    ordering = ['-created_at'] 

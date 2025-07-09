@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import (
     ProcessoListCreateView,
+    ProcessoListViewHTML,
     ProcessoRetrieveUpdateDestroyView,
     MovimentacaoListView,
     ParteListView,
@@ -28,4 +29,7 @@ urlpatterns = [
     path('consulta-datajud/documento/', ConsultaDatajudDocumentoView.as_view(), name='consulta-datajud-documento'),
     path('consulta-tjsp/numero/', ConsultaTJSPNumeroView.as_view(), name='consulta-tjsp-numero'),  # Exemplos de views para consulta ao adaptador TJSP
     path('consulta-tjsp/documento/', ConsultaTJSPDocumentoView.as_view(), name='consulta-tjsp-documento'),
+
+    #urls das views de renderização
+    path('app/processo/', ProcessoListViewHTML.as_view(), name='processo-lista'),
 ]
