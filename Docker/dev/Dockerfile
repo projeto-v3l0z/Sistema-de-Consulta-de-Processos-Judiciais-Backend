@@ -22,13 +22,12 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 COPY . .
 
 COPY Docker/dev/.bashrc /home/v3loz/.bashrc
-COPY Docker/dev/entrypoint.sh /home/v3loz/entrypoint.sh
-RUN chown v3loz:v3loz /home/v3loz/.bashrc /home/v3loz/entrypoint.sh
+
+
 
 USER v3loz
 
-# Chama o entrypoint explicitamente com bash
-ENTRYPOINT ["bash", "/home/v3loz/entrypoint.sh"]
+
 
 # O comando padrão (pode ser sobrescrito no docker-compose)
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
