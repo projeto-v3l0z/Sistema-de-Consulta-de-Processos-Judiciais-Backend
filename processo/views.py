@@ -16,13 +16,20 @@ from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 
+from integrations.datajud_adapter import DatajudAdapter
+from integrations.tjsp_adapter import TJSPAdapter
 
 # botei pra testar se lembra de mudar os permissoes depois quando tiver usuarios
 AUTH_ON = False
 
 # CRUD
-
+from core.ratelimit_preset import Generico
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django_ratelimit.decorators import ratelimit
 # create & List
+@method_decorator(cache_page(30), name="get")
+@method_decorator(ratelimit(key="ip", rate='10/m', block=True), name="get")
 class ProcessoListCreateView(generics.ListCreateAPIView):
     queryset = Processo.objects.all()
     serializer_class = ProcessoSerializer

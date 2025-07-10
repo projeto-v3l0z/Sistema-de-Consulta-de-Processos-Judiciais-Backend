@@ -28,6 +28,13 @@ class User(AbstractUser):
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # --- LINHAS ADICIONADAS ---
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
+    # --------------------------
+
+    objects = UserManager() # Movi esta linha para cima para melhor organização
+
     def assign_default_groups_and_permissions(self):
         """
         Atribuindo grupos e permissões padrões ao usuário durante sua criação.
@@ -43,5 +50,3 @@ class User(AbstractUser):
     class Meta:
         verbose_name = "Usuário"
         verbose_name_plural = "Usuários"
-
-    objects = UserManager()
