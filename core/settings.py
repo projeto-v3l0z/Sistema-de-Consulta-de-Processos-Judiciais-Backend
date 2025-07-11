@@ -17,7 +17,7 @@ INSTALLED_APPS = [
     'movimentacao',
     'parte',
     'core',
-    "corsheaders",
+    'corsheaders',
     'drf_yasg',
     'rest_framework_simplejwt',
     'rest_framework',
