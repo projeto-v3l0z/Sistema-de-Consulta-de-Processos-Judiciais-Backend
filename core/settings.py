@@ -36,6 +36,7 @@ INSTALLED_APPS = [
 AUTH_USER_MODEL = 'usuario.User'
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -49,6 +50,24 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'core.urls'
 STATIC_URL = '/static/'
 STATIC_ROOT = '/app/static'
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+]
+
+CORS_ALLOW_METHODS = [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "OPTIONS",
+]
+
+CORS_ALLOW_HEADERS = [
+    "authorization",
+    "content-type",
+]
 
 TEMPLATES = [
     {
