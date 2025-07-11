@@ -32,8 +32,9 @@ from core.ratelimit_preset import Generico
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django_ratelimit.decorators import ratelimit
+
 # create & List
-@method_decorator(cache_page(30), name="get")
+_@method_decorator(cachepage(30), name="get")
 @method_decorator(ratelimit(key="ip", rate='10/m', block=True), name="get")
 class ProcessoListCreateView(generics.ListCreateAPIView):
     queryset = Processo.objects.all()

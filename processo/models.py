@@ -3,6 +3,39 @@ from django.core.validators import RegexValidator
 from django.utils import timezone
 import uuid
 
+class SituacaoProcesso(models.TextChoices):
+    
+    # Fases Iniciais
+    CADASTRADO = 'CAD', 'Cadastrado'
+    DISTRIBUIDO = 'DIS', 'Distribuído'
+    AGUARDANDO_CITACAO = 'CIT', 'Aguardando Citação'
+    IMPULSIONADO = 'IMP', 'Impulsionado'
+    
+    # Andamento
+    EM_PREPARO = 'PRE', 'Em Preparo'
+    EM_PAUTA_EMBARGOS = 'PEC', 'Em Pauta para Embargos'
+    RECURSAL = 'REC', 'Recursal'
+    HOMOLOGADO = 'HOM', 'Homologado'
+    
+    # Suspensões
+    SUSPENSO = 'SUS', 'Suspenso'
+    SUSPENSO_AUSENCIA_PARTES = 'AUS', 'Suspenso por Ausência de Partes'
+    SUSPENSO_PERICIA = 'PER', 'Suspenso por Perícia'
+    
+    # Finalizações
+    ARQUIVADO = 'ARQ', 'Arquivado'
+    BAIXADO = 'BAI', 'Baixado'
+    JULGADO = 'JUL', 'Julgado'
+    EXTINTO = 'EXT', 'Extinto'
+    CUMPRIDO = 'CUM', 'Cumprido'
+    LIQUIDADO = 'LIQ', 'Liquidado'
+    
+    # Situações Especiais
+    DESMEMBRADO = 'DES', 'Desmembrado'
+    INCIDENTE_PROCESSUAL = 'INC', 'Incidente Processual'
+    INTERVENCAO_TERCEIRO = 'INT', 'Intervenção de Terceiro'
+    UNIFICADO = 'UNI', 'Unificado'
+
 class Processo(models.Model):
     id = models.UUIDField(
         primary_key=True, 
@@ -63,47 +96,12 @@ class Processo(models.Model):
         verbose_name="Valor da Causa"
     )
     
-    #criar class e declararo os campos 
-    SITUACAO_CHOICES = [    # pesquisei todas as siglas, talvez precise de ajustes
-                        
-        # Fases Iniciais
-        ('CAD', 'Cadastrado'),
-        ('DIS', 'Distribuído'),
-        ('CIT', 'Aguardando Citação'),
-        ('IMP', 'Impulsionado'),
-        
-        # Andamento
-        ('PRE', 'Em Preparo'),
-        ('PEC', 'Em Pauta para Embargos'),
-        ('REC', 'Recursal'),
-        ('HOM', 'Homologado'),
-        
-        # Suspensões
-        ('SUS', 'Suspenso'),
-        ('AUS', 'Suspenso por Ausência de Partes'),
-        ('PER', 'Suspenso por Perícia'),
-        
-        # Finalizações
-        ('ARQ', 'Arquivado'),
-        ('BAI', 'Baixado'),
-        ('JUL', 'Julgado'),
-        ('EXT', 'Extinto'),
-        ('CUM', 'Cumprido'),
-        ('LIQ', 'Liquidado'),
-        
-        # Situações Especiais
-        ('DES', 'Desmembrado'),
-        ('INC', 'Incidente Processual'),
-        ('INT', 'Intervenção de Terceiro'),
-        ('UNI', 'Unificado'),
-    ]
-    
     situacao_atual = models.CharField(
         max_length=3,
         blank=True,
         null=True,
-        choices=SITUACAO_CHOICES,
-        default='CAD',
+        choices=SituacaoProcesso.choices,
+        default=SituacaoProcesso.CADASTRADO,
         verbose_name="Situação Atual"
     )
     ultima_atualizacao = models.DateTimeField(
