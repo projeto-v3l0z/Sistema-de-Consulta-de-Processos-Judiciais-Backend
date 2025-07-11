@@ -17,6 +17,7 @@ INSTALLED_APPS = [
     'movimentacao',
     'parte',
     'core',
+    "corsheaders",
     'drf_yasg',
     'rest_framework_simplejwt',
     'rest_framework',
@@ -128,6 +129,9 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
+
+
+
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -141,5 +145,3 @@ CACHES = {
 }
 
 RATELIMIT_USE_CACHE = "default"
-
-

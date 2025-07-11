@@ -1,3 +1,4 @@
+# views.py
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from django.views.generic import ListView
@@ -14,30 +15,32 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
 from .models import Processo
-from .serializers import (ProcessoSerializer, StandardProcessoSerializer, StandardParteSerializer, StandardMovimentacaoSerializer)
-from .services import get_processo, consultar_processos_por_documento # <-- nossos servições de adaptadores
+from .serializers import (
+    ProcessoSerializer,
+    StandardProcessoSerializer,
+    StandardParteSerializer,
+    StandardMovimentacaoSerializer,
+)
+from .services import (
+    get_processo,
+    consultar_processos_por_documento,
+)
 
 from movimentacao.models import Movimentacao
-from movimentacao.serializers import MovimentacaoSerializer
 from parte.models import Parte
-from parte.serializers import ParteSerializer
 
-from django.utils import timezone
-from django.shortcuts import get_object_or_404
-from django.db.models import Q
+from .adapters.datajud_adapter import DatajudAdapter
+from .adapters.tjsp_adapter import TjspAdapter
 
-from integrations.datajud_adapter import DatajudAdapter
-from integrations.tjsp_adapter import TJSPAdapter
-
-# botei pra testar se lembra de mudar os permissoes depois quando tiver usuarios
-AUTH_ON = False
-
-# CRUD
 from core.ratelimit_preset import Generico
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
+
 from django_ratelimit.decorators import ratelimit
-# create & List
+
+AUTH_ON = False  # Carlos lembrar pfvr de muda pra True quando tiver em produção
+
+
 @method_decorator(cache_page(30), name="get")
 @method_decorator(ratelimit(key="ip", rate='10/m', block=True), name="get")
 class ProcessoListCreateView(generics.ListCreateAPIView):
@@ -57,7 +60,7 @@ class ProcessoListCreateView(generics.ListCreateAPIView):
         if situacao:
             qs = qs.filter(situacao_atual=situacao)
         return qs.order_by('-created_at')
-    
+
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         data = [
@@ -75,8 +78,6 @@ class ProcessoListCreateView(generics.ListCreateAPIView):
         serializer = StandardProcessoSerializer(data, many=True)
         return Response(serializer.data)
 
-
-    #Para padronizar a resposta de criação:
     def create(self, request, *args, **kwargs):
         resp = super().create(request, *args, **kwargs)
         inst = self.get_queryset().get(pk=resp.data['id'])
@@ -115,7 +116,6 @@ class ProcessoRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         serializer = StandardProcessoSerializer(data)
         return Response(serializer.data)
 
-
     def update(self, request, *args, **kwargs):
         resp = super().update(request, *args, **kwargs)
         inst = self.get_object()
@@ -130,7 +130,6 @@ class ProcessoRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         }
         serializer = StandardProcessoSerializer(data)
         return Response(serializer.data, status=resp.status_code)
-
 
 
 class MovimentacaoListView(generics.ListAPIView):
@@ -152,16 +151,14 @@ class MovimentacaoListView(generics.ListAPIView):
         return Response(serializer.data)
 
 
-
 class ParteListView(generics.ListAPIView):
-    """
-    Lista as partes de um processo.
-    Escapa do schema-gen quando swagger_fake_view=True.
-    """
+    def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Parte.objects.none()
+        return Parte.objects.filter(processo_id=self.kwargs['pk'])
+
     def list(self, request, *args, **kwargs):
-        # Pega o queryset normalmente (já respeita swagger_fake_view)
         qs = self.get_queryset()
-        # Monta o JSON só com os campos padronizados
         data = [
             {
                 "nome":      parte.nome,
@@ -171,12 +168,6 @@ class ParteListView(generics.ListAPIView):
         ]
         serializer = StandardParteSerializer(data, many=True)
         return Response(serializer.data)
-
-    def get_queryset(self):
-        # mantém o escape para o Swagger
-        if getattr(self, 'swagger_fake_view', False):
-            return Parte.objects.none()
-        return Parte.objects.filter(processo_id=self.kwargs['pk'])
 
 
 class ProcessoBuscaView(APIView):
@@ -213,9 +204,6 @@ class ProcessoBuscaView(APIView):
 
 
 class ProcessoForcarAtualizacaoView(APIView):
-    """
-    Chama o adaptador externo, padroniza e atualiza o Processo no banco.
-    """
     permission_classes = [AllowAny] if not AUTH_ON else [IsAuthenticated]
 
     def post(self, request, pk):
@@ -224,39 +212,79 @@ class ProcessoForcarAtualizacaoView(APIView):
         processo.save()
         serializer = ProcessoSerializer(processo)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
 
-# Exemplo de views para consulta ao Datajud
+
+class ProcessoBuscaDocumentoView(APIView):
+    permission_classes = [AllowAny] if not AUTH_ON else [IsAuthenticated]
+
+    @swagger_auto_schema(request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={'documento': openapi.Schema(type=openapi.TYPE_STRING)}
+    ))
+    def post(self, request):
+        documento = request.data.get('documento', '').strip()
+        if not re.fullmatch(r'\d{11}|\d{14}', documento):
+            return Response(
+                {'error': 'Documento inválido. Informe um CPF (11 dígitos) ou CNPJ (14 dígitos).'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            fonte = request.query_params.get('fonte')
+            if fonte:
+                dtos = consultar_processos_por_documento(documento, fonte)
+            else:
+                from .services import ADAPTERS
+                dtos = []
+                for key, adapter in ADAPTERS.items():
+                    try:
+                        dtos.extend(adapter.consultar_por_documento(documento))
+                    except Exception:
+                        continue
+
+            data = [
+                {
+                    "numero_processo":   dto.numero_processo,
+                    "tribunal":          dto.tribunal,
+                    "classe_processual": dto.classe_processual,
+                    "assunto":           dto.assunto,
+                    "data_distribuicao": dto.data_distribuicao,
+                    "orgao_julgador":    dto.orgao_julgador,
+                    "situacao_atual":    dto.situacao_atual,
+                }
+                for dto in dtos
+            ]
+            serializer = StandardProcessoSerializer(data, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception:
+            return Response(
+                {'error': 'Erro interno ao consultar processos por documento.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
 class ConsultaDatajudNumeroView(APIView):
     def get(self, request):
-        numero = request.query_params.get('numero') # Obtém o número do processo dos parâmetros da requisição
-        resultado = DatajudAdapter().consultar_por_numero(numero) 
+        numero = request.query_params.get('numero')
+        resultado = DatajudAdapter().consultar_por_numero(numero)
         return Response(resultado)
-    
+
 class ConsultaDatajudDocumentoView(APIView):
     def get(self, request):
-        documento = request.query_params.get('documento')  # Obtém o CPF ou CNPJ dos parâmetros da requisição
+        documento = request.query_params.get('documento')
         resultado = DatajudAdapter().consultar_por_documento(documento)
         return Response(resultado)
-    
-# Exemplo de views para consulta ao TJSP
+
 class ConsultaTJSPNumeroView(APIView):
     def get(self, request):
-        numero = request.query_params.get('numero')  # Obtém o número do processo dos parâmetros da requisição
-        resultado = TJSPAdapter().consultar_por_numero(numero)
+        numero = request.query_params.get('numero')
+        resultado = TjspAdapter().consultar_por_numero(numero)
         return Response(resultado)
-    
+
 class ConsultaTJSPDocumentoView(APIView):
     def get(self, request):
-        documento = request.query_params.get('documento')  # Obtém o CPF ou CNPJ dos parâmetros da requisição
-        resultado = TJSPAdapter().consultar_por_documento(documento)
+        documento = request.query_params.get('documento')
+        resultado = TjspAdapter().consultar_por_documento(documento)
         return Response(resultado)
-    
-
-#Views da renderização
-class ProcessoListViewHTML(ListView):
-    model = Processo
-    template_name = 'processo/listProcessoView.html'    
-    context_object_name = 'processo'         
-    paginate_by = 20                         
-    ordering = ['-created_at'] 
