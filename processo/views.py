@@ -16,6 +16,9 @@ from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters
+from .filters import ProcessoFilter
 
 # botei pra testar se lembra de mudar os permissoes depois quando tiver usuarios
 AUTH_ON = False
@@ -32,19 +35,29 @@ class ProcessoListCreateView(generics.ListCreateAPIView):
     queryset = Processo.objects.all()
     serializer_class = ProcessoSerializer
     permission_classes = [AllowAny] if not AUTH_ON else [IsAuthenticated]
+
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_class = ProcessoFilter
+    ordering_fields = ["data_distribuicao", "ultima_atualizacao"]
+    ordering = ["-data_distribuicao"]
+
+# class ProcessoListCreateView(generics.ListCreateAPIView):
+#     queryset = Processo.objects.all()
+#     serializer_class = ProcessoSerializer
+#     permission_classes = [AllowAny] if not AUTH_ON else [IsAuthenticated]
     
-    def get_queryset(self):
-        queryset = Processo.objects.all()  # Processo.objects.filter(usuario=self.request.user)
-        tribunal = self.request.query_params.get('tribunal', None)
-        numero = self.request.query_params.get('numero', None)
-        situacao = self.request.query_params.get('situacao', None)
-        if tribunal:
-            queryset = queryset.filter(tribunal=tribunal)
-        if numero:
-            queryset = queryset.filter(numero_processo__icontains=numero)
-        if situacao:
-            queryset = queryset.filter(situacao_atual=situacao)
-        return queryset.order_by('-created_at')
+#     def get_queryset(self):
+#         queryset = Processo.objects.all()  # Processo.objects.filter(usuario=self.request.user)
+#         tribunal = self.request.query_params.get('tribunal', None)
+#         numero = self.request.query_params.get('numero', None)
+#         situacao = self.request.query_params.get('situacao', None)
+#         if tribunal:
+#             queryset = queryset.filter(tribunal=tribunal)
+#         if numero:
+#             queryset = queryset.filter(numero_processo__icontains=numero)
+#         if situacao:
+#             queryset = queryset.filter(situacao_atual=situacao)
+#         return queryset.order_by('-created_at')
 
 # Read & Update & Delete
 class ProcessoRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
