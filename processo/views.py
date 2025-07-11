@@ -2,6 +2,7 @@ from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.pagination import LimitOffsetPagination
 
 from .models import Processo
 from .serializers import ProcessoSerializer
@@ -34,7 +35,7 @@ from django.views.decorators.cache import cache_page
 from django_ratelimit.decorators import ratelimit
 
 # create & List
-_@method_decorator(cachepage(30), name="get")
+@method_decorator(cache_page(30), name="get")
 @method_decorator(ratelimit(key="ip", rate='10/m', block=True), name="get")
 class ProcessoListCreateView(generics.ListCreateAPIView):
     queryset = Processo.objects.all()
@@ -162,3 +163,23 @@ class HealthCheckView(APIView):
 
         # Retorna 200 se tudo estiver ok, 503 se algum serviço estiver indisponível
         return Response(health, status=status.HTTP_200_OK if all(v == 'ok' for v in health.values()) else status.HTTP_503_SERVICE_UNAVAILABLE) 
+
+class ProcessoMovimentosPagination(LimitOffsetPagination): # Controla quantidade de resultados por página
+    default_limit = 20
+    max_limit = 100
+
+class ProcessoMovimentosView(APIView):
+    def get(self, request, numero):
+        processo = get_object_or_404(Processo, numero_processo=numero)
+        movimentos_qs = Movimentacao.objects.filter(processo=processo).order_by('-data_movimentacao')
+        paginator = ProcessoMovimentosPagination()
+        result_page = paginator.paginate_queryset(movimentos_qs, request)
+        movimentos = []
+        for mov in result_page:
+            movimentos.append({
+                "dataHora": mov.data_movimentacao,
+                #"nome": mov.nome,
+                #"codigo": mov.codigo,
+                #"complementosTabelados": getattr(mov, 'complementos_tabelados', []) or []
+            })
+        return paginator.get_paginated_response(movimentos)
