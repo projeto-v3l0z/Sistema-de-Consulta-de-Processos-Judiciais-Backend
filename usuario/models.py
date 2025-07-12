@@ -27,7 +27,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(max_length=150, unique=True)
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=128)  # será gerenciado pelo AbstractBaseUser
-    cpf = models.CharField(max_length=11, unique=True, default='00000000000')  # Obrigatório
+    cpf = models.CharField(max_length=11, unique=True)  # Obrigatório
     cnpj = models.CharField(max_length=14, unique=True, null=True, blank=True)  # Opcional
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)

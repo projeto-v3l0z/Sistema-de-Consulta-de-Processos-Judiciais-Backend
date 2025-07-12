@@ -4,7 +4,7 @@ def buscar_processo_datajud(numero_processo):
     url = f"https://api-publica.datajud.cnj.jus.br/api_publica_trf1/"
 
     headers = {
-        "Authorization": f"Bearer {settings.DATAJUD_TOKEN}",
+        "Authorization": settings.DATAJUD_TOKEN,
         "Content-Type": "application/json",
         "Accept": "application/json"
     }

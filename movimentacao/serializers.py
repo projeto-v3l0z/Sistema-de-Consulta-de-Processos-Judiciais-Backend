@@ -4,4 +4,14 @@ from .models import Movimentacao
 class MovimentacaoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Movimentacao
-        fields = '__all__'
+        fields = [
+            'id',
+            'processo',
+            'data_movimentacao',
+            'tipo_movimentacao',
+            'descricao',
+            'responsavel',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'processo', 'created_at', 'updated_at']

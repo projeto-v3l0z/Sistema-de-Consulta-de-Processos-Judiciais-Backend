@@ -2,11 +2,13 @@ from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView 
 from rest_framework.response import Response
+from django_filters.rest_framework import DjangoFilterBackend
 #from .adapters import datajud, tjsp, tjrj
 from processo.adapters.datajud import buscar_processo_datajud
 
 
 from .models import Processo
+from .filters import ProcessoFilter
 from .serializers import ProcessoSerializer
 
 from movimentacao.models import Movimentacao
@@ -36,22 +38,11 @@ from django_ratelimit.decorators import ratelimit
 @method_decorator(cache_page(30), name="get")
 @method_decorator(ratelimit(key="ip", rate='10/m', block=True), name="get")
 class ProcessoListCreateView(generics.ListCreateAPIView):
-    queryset = Processo.objects.all()
+    queryset = Processo.objects.all().order_by('-created_at')
     serializer_class = ProcessoSerializer
     permission_classes = [AllowAny] if not AUTH_ON else [IsAuthenticated]
-    
-    def get_queryset(self):
-        queryset = Processo.objects.all()  # Processo.objects.filter(usuario=self.request.user)
-        tribunal = self.request.query_params.get('tribunal', None)
-        numero = self.request.query_params.get('numero', None)
-        situacao = self.request.query_params.get('situacao', None)
-        if tribunal:
-            queryset = queryset.filter(tribunal=tribunal)
-        if numero:
-            queryset = queryset.filter(numero_processo__icontains=numero)
-        if situacao:
-            queryset = queryset.filter(situacao_atual=situacao)
-        return queryset.order_by('-created_at')
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = ProcessoFilter
 
 # Read & Update & Delete
 class ProcessoRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
@@ -66,35 +57,43 @@ class ProcessoRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         serializer.save(updated_at=timezone.now())
 
 # movimentacao
-class MovimentacaoListView(generics.ListAPIView):
+class MovimentacaoListCreateView(generics.ListCreateAPIView):
     serializer_class = MovimentacaoSerializer
     
     def get_queryset(self):
-        processo_id = self.kwargs['pk']
-        return Movimentacao.objects.filter(processo_id=processo_id).order_by('-data_movimentacao')
+        get_object_or_404(Processo, pk=self.kwargs['pk'])
+        return Movimentacao.objects.filter(processo_id=self.kwargs['pk']).order_by('-data_movimentacao')
+
+    def perform_create(self, serializer):
+        processo = get_object_or_404(Processo, pk=self.kwargs['pk'])
+        serializer.save(processo=processo)
 
 # Partes
-class ParteListView(generics.ListAPIView):
+class ParteListCreateView(generics.ListCreateAPIView):
     serializer_class = ParteSerializer
 
     def get_queryset(self):
-        processo_id = self.kwargs['pk']
-        return Parte.objects.filter(processo_id=processo_id)
+        get_object_or_404(Processo, pk=self.kwargs['pk'])
+        return Parte.objects.filter(processo_id=self.kwargs['pk'])
 
-# Busca
-class ProcessoBuscaView(APIView):
-    def post(self, request):
-        termo = request.data.get('termo', '').strip()
-        if not termo:
-            return Response({'detail': 'Informe um termo de busca.'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        queryset = Processo.objects.filter(
-            Q(numero_processo__icontains=termo) |
-            Q(partes__documento__icontains=termo)
-        ).distinct()
-        serializer = ProcessoSerializer(queryset, many=True)
-        return Response(serializer.data)
+    def perform_create(self, serializer):
+        processo = get_object_or_404(Processo, pk=self.kwargs['pk'])
+        serializer.save(processo=processo)
 
+class ParteRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = ParteSerializer
+
+    def get_queryset(self):
+        return Parte.objects.filter(processo_id=self.kwargs['processo_pk'])
+
+class MovimentacaoRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = MovimentacaoSerializer
+
+    def get_queryset(self):
+        return Movimentacao.objects.filter(processo_id=self.kwargs['processo_pk'])
+
+
+    
 # Forçar Atualização
 class ProcessoForcarAtualizacaoView(APIView):
     def post(self, request, pk):
