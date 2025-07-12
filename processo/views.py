@@ -1,10 +1,13 @@
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.views import APIView
+from rest_framework.views import APIView 
 from rest_framework.response import Response
+#from .adapters import datajud, tjsp, tjrj
+from processo.adapters.datajud import buscar_processo_datajud
+
 
 from .models import Processo
-from .serializers import ProcessoSerializer
+from .serializers import ProcessoSerializer, ProcessoBuscaSerializer
 
 from movimentacao.models import Movimentacao
 from movimentacao.serializers import MovimentacaoSerializer

@@ -18,10 +18,28 @@ class UserViewSet(viewsets.ModelViewSet):
         if self.action in ['create']:
             return [AllowAny()]
         return super().get_permissions()
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.views import APIView  
+
+
+class RegisterView(generics.CreateAPIView):
+    serializer_class = RegisterSerializer
+
+class LoginView(APIView):
+    serializer_class = LoginSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        })
+
+
 
 #Para testes
+
 class RotaProtegidaView(APIView):
     permission_classes = [IsAuthenticated]
 

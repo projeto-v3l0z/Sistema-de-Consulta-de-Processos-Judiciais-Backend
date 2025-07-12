@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Processo
+import re
 
 class ProcessoSerializer(serializers.ModelSerializer):
     # Caso queira expor a descricao tambem

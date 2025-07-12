@@ -4,7 +4,7 @@ from .views import (
     ProcessoRetrieveUpdateDestroyView,
     MovimentacaoListView,
     ParteListView,
-    ProcessoBuscaView,
+    BuscaProcessoView,
     ProcessoForcarAtualizacaoView,
 
     ConsultaDatajudNumeroView,
@@ -29,3 +29,5 @@ urlpatterns = [
     path('consulta-tjsp/numero/', ConsultaTJSPNumeroView.as_view(), name='consulta-tjsp-numero'),  # Exemplos de views para consulta ao adaptador TJSP
     path('consulta-tjsp/documento/', ConsultaTJSPDocumentoView.as_view(), name='consulta-tjsp-documento'),
 ]
+
+# busca_processo
