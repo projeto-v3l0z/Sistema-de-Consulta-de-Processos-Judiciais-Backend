@@ -34,17 +34,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
-    # --- LINHAS ADICIONADAS ---
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
-    # --------------------------
+
 
     objects = UserManager() # Movi esta linha para cima para melhor organização
 
     objects = UserManager()
-
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username', 'cpf']
 
     def __str__(self):
         return f"{self.username} ({self.email})"

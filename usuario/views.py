@@ -7,7 +7,15 @@ from rest_framework.decorators import api_view, permission_classes
 from .permissions import PodeCadastrarProcessos, PodeVisualizarProcessos
 from django.http import HttpResponse
 from rest_framework_simplejwt.views import TokenObtainPairView
-from .serializers import MyTokenObtainPairSerializer
+from .serializers import MyTokenObtainPairSerializer, RegisterSerializer, LoginSerializer
+from rest_framework import generics
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.views.decorators.cache import cache_page
+from django_ratelimit.decorators import ratelimit
+from core.ratelimit_preset import Generico 
+
+
 from django.shortcuts import render
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -49,9 +57,7 @@ class RotaProtegidaView(APIView):
             })
 
 #View que usei pra testar o rate limit e o cache
-from django.views.decorators.cache import cache_page
-from django_ratelimit.decorators import ratelimit
-from core.ratelimit_preset import Generico  # Importando o preset personalizado
+ # Importando o preset personalizado
 
 @api_view(["GET"])
 @cache_page(30) # 30 s de cache

@@ -13,7 +13,7 @@ urlpatterns = [
     
     path('login/', login_page_view, name='login_page'),
     path('token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
-path('auth/register/', RegisterView.as_view(), name='register'),
+    path('auth/register/', RegisterView.as_view(), name='register'),
     path('auth/login/', LoginView.as_view(), name='login'),
    # path('teste/', teste),  # apenas teste de permissão
 ]
