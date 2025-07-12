@@ -31,4 +31,5 @@ Thumbs.db
 
 # Docker
 Docker/prod/
+Docker/dev/entrypoint.sh
 docker-compose.prod.yml
