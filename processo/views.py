@@ -1,15 +1,10 @@
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.views import APIView 
+from rest_framework.views import APIView
 from rest_framework.response import Response
-from django_filters.rest_framework import DjangoFilterBackend
-#from .adapters import datajud, tjsp, tjrj
-from processo.adapters.datajud import buscar_processo_datajud
-
 
 from .models import Processo
-from .filters import ProcessoFilter
-from .serializers import ProcessoSerializer, ProcessoBuscaSerializer
+from .serializers import ProcessoSerializer
 
 from movimentacao.models import Movimentacao
 from movimentacao.serializers import MovimentacaoSerializer
@@ -21,21 +16,37 @@ from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 
-
-from .services import buscar_processo_com_fallback
+from integrations.datajud_adapter import DatajudAdapter
+from integrations.tjsp_adapter import TJSPAdapter
 
 # botei pra testar se lembra de mudar os permissoes depois quando tiver usuarios
 AUTH_ON = False
 
 # CRUD
-
+from core.ratelimit_preset import Generico
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django_ratelimit.decorators import ratelimit
 # create & List
+@method_decorator(cache_page(30), name="get")
+@method_decorator(ratelimit(key="ip", rate='10/m', block=True), name="get")
 class ProcessoListCreateView(generics.ListCreateAPIView):
-    queryset = Processo.objects.all().order_by('-created_at')
+    queryset = Processo.objects.all()
     serializer_class = ProcessoSerializer
     permission_classes = [AllowAny] if not AUTH_ON else [IsAuthenticated]
-    filter_backends = [DjangoFilterBackend]
-    filterset_class = ProcessoFilter
+    
+    def get_queryset(self):
+        queryset = Processo.objects.all()  # Processo.objects.filter(usuario=self.request.user)
+        tribunal = self.request.query_params.get('tribunal', None)
+        numero = self.request.query_params.get('numero', None)
+        situacao = self.request.query_params.get('situacao', None)
+        if tribunal:
+            queryset = queryset.filter(tribunal=tribunal)
+        if numero:
+            queryset = queryset.filter(numero_processo__icontains=numero)
+        if situacao:
+            queryset = queryset.filter(situacao_atual=situacao)
+        return queryset.order_by('-created_at')
 
 # Read & Update & Delete
 class ProcessoRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
@@ -50,43 +61,35 @@ class ProcessoRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         serializer.save(updated_at=timezone.now())
 
 # movimentacao
-class MovimentacaoListCreateView(generics.ListCreateAPIView):
+class MovimentacaoListView(generics.ListAPIView):
     serializer_class = MovimentacaoSerializer
     
     def get_queryset(self):
-        get_object_or_404(Processo, pk=self.kwargs['pk'])
-        return Movimentacao.objects.filter(processo_id=self.kwargs['pk']).order_by('-data_movimentacao')
-
-    def perform_create(self, serializer):
-        processo = get_object_or_404(Processo, pk=self.kwargs['pk'])
-        serializer.save(processo=processo)
+        processo_id = self.kwargs['pk']
+        return Movimentacao.objects.filter(processo_id=processo_id).order_by('-data_movimentacao')
 
 # Partes
-class ParteListCreateView(generics.ListCreateAPIView):
+class ParteListView(generics.ListAPIView):
     serializer_class = ParteSerializer
 
     def get_queryset(self):
-        get_object_or_404(Processo, pk=self.kwargs['pk'])
-        return Parte.objects.filter(processo_id=self.kwargs['pk'])
+        processo_id = self.kwargs['pk']
+        return Parte.objects.filter(processo_id=processo_id)
 
-    def perform_create(self, serializer):
-        processo = get_object_or_404(Processo, pk=self.kwargs['pk'])
-        serializer.save(processo=processo)
+# Busca
+class ProcessoBuscaView(APIView):
+    def post(self, request):
+        termo = request.data.get('termo', '').strip()
+        if not termo:
+            return Response({'detail': 'Informe um termo de busca.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        queryset = Processo.objects.filter(
+            Q(numero_processo__icontains=termo) |
+            Q(partes_documento_icontains=termo)
+        ).distinct()
+        serializer = ProcessoSerializer(queryset, many=True)
+        return Response(serializer.data)
 
-class ParteRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = ParteSerializer
-
-    def get_queryset(self):
-        return Parte.objects.filter(processo_id=self.kwargs['processo_pk'])
-
-class MovimentacaoRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = MovimentacaoSerializer
-
-    def get_queryset(self):
-        return Movimentacao.objects.filter(processo_id=self.kwargs['processo_pk'])
-
-
-    
 # Forçar Atualização
 class ProcessoForcarAtualizacaoView(APIView):
     def post(self, request, pk):
@@ -97,18 +100,28 @@ class ProcessoForcarAtualizacaoView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
 
-# Busca
-
-class BuscaProcessoView(APIView):
-    def post(self, request):
-        serializer = ProcessoBuscaSerializer(data=request.data)
-        if serializer.is_valid():
-            numero = serializer.validated_data['numero_processo']
-            resultado = buscar_processo_com_fallback(numero)
-            if resultado:
-                return Response(resultado, status=status.HTTP_200_OK)
-            return Response({"detail": "Processo não encontrado em nenhuma fonte."}, status=status.HTTP_404_NOT_FOUND)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+# Exemplo de views para consulta ao Datajud
+class ConsultaDatajudNumeroView(APIView):
+    def get(self, request):
+        numero = request.query_params.get('numero') # Obtém o número do processo dos parâmetros da requisição
+        resultado = DatajudAdapter().consultar_por_numero(numero) 
+        return Response(resultado)
     
-
+class ConsultaDatajudDocumentoView(APIView):
+    def get(self, request):
+        documento = request.query_params.get('documento')  # Obtém o CPF ou CNPJ dos parâmetros da requisição
+        resultado = DatajudAdapter().consultar_por_documento(documento)
+        return Response(resultado)
     
+# Exemplo de views para consulta ao TJSP
+class ConsultaTJSPNumeroView(APIView):
+    def get(self, request):
+        numero = request.query_params.get('numero')  # Obtém o número do processo dos parâmetros da requisição
+        resultado = TJSPAdapter().consultar_por_numero(numero)
+        return Response(resultado)
+    
+class ConsultaTJSPDocumentoView(APIView):
+    def get(self, request):
+        documento = request.query_params.get('documento')  # Obtém o CPF ou CNPJ dos parâmetros da requisição
+        resultado = TJSPAdapter().consultar_por_documento(documento)
+        return Response(resultado)

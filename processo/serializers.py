@@ -3,6 +3,9 @@ from .models import Processo
 import re
 
 class ProcessoSerializer(serializers.ModelSerializer):
+    # Caso queira expor a descricao tambem
+    situacao_atual_descricao = serializers.SerializerMethodField()
+
     class Meta:
         model = Processo
         fields = [
@@ -14,17 +17,10 @@ class ProcessoSerializer(serializers.ModelSerializer):
             'data_distribuicao',
             'orgao_julgador',
             'valor_causa',
-            'situacao_atual',
+            'situacao_atual',            
+            'situacao_atual_descricao',  
             'ultima_atualizacao',
-            'usuario'
-        ] 
+        ]
 
-
-class ProcessoBuscaSerializer(serializers.Serializer):
-    numero_processo = serializers.CharField()
-
-    def validate_numero_processo(self, value):
-        pattern = r'^\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}$'
-        if not re.match(pattern, value):
-            raise serializers.ValidationError("Número de processo inválido.")
-        return value
+    def get_situacao_atual_descricao(self, obj):
+        return obj.get_situacao_atual_display()

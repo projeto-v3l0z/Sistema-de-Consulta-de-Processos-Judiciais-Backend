@@ -1,42 +1,33 @@
 from pathlib import Path
 import os
 from datetime import timedelta
-from dotenv import load_dotenv
-
-# Carrega as variáveis de ambiente do arquivo .env no início.
-load_dotenv()
+  # necessário para JWT futuramente
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Segurança e Debug
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-6^kitpkq&4nkm+e-ixo=+5)!%w9@l0ka(!&h_gli#=7xevw_y6')
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
-
-ALLOWED_HOSTS_str = os.environ.get('DJANGO_ALLOWED_HOSTS')
-ALLOWED_HOSTS = ALLOWED_HOSTS_str.split(',') if ALLOWED_HOSTS_str else []
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if os.environ.get('DJANGO_ALLOWED_HOSTS') else []
 
 INSTALLED_APPS = [
-    # Django Core 
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django.contrib.auth',
-    'django.contrib.admin',
-
-    # Apps
-    'rest_framework',
-    'rest_framework_simplejwt',
-    'drf_yasg',
-    'django_extensions',
-    'django_filters',
-
-    # Local 
     'usuario',
     'tribunais',
     'processo',
     'movimentacao',
     'parte',
+    'core',
+    "corsheaders",
+    'drf_yasg',
+    'rest_framework_simplejwt',
+    'rest_framework',
+    'django_extensions',
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
 ]
 
 # Middleware
@@ -44,6 +35,7 @@ INSTALLED_APPS = [
 AUTH_USER_MODEL = 'usuario.User'
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -51,14 +43,35 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
 ]
 
 ROOT_URLCONF = 'core.urls'
+STATIC_URL = '/static/'
+STATIC_ROOT = '/app/static'
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+]
+
+CORS_ALLOW_METHODS = [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "OPTIONS",
+]
+
+CORS_ALLOW_HEADERS = [
+    "authorization",
+    "content-type",
+]
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],  # Pastas de templates personalizadas podem ser adicionadas aqui
+        'DIRS': [],  
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -120,21 +133,32 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.AllowAny',
-    ),
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,  
+        'rest_framework.permissions.AllowAny',  
+    )
+
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # tempo de validade do token de acesso
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),   # tempo de validade do token de refresh
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': False,
     'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
+    'SIGNING_KEY': SECRET_KEY,  # normalmente já é sua chave secreta do Django
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-# Carrega a chave da API do DataJud a partir da variável de ambiente definida no .env
-DATAJUD_TOKEN = os.getenv('DATAJUD_API_KEY')
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": os.getenv("REDIS_URL", "redis://redis:6379/0"),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "SERIALIZER": "django_redis.serializers.pickle.PickleSerializer",
+        },
+        "TIMEOUT": 60 * 60,      # 1 h (pode ser sobrescrito por view)
+    }
+}
+
+RATELIMIT_USE_CACHE = "default"
+
