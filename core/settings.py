@@ -1,33 +1,44 @@
 from pathlib import Path
 import os
 from datetime import timedelta
-  # necessário para JWT futuramente
+from dotenv import load_dotenv
+
+# Carrega as variáveis de ambiente do arquivo .env no início.
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Segurança e Debug
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-6^kitpkq&4nkm+e-ixo=+5)!%w9@l0ka(!&h_gli#=7xevw_y6')
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if os.environ.get('DJANGO_ALLOWED_HOSTS') else []
+
+ALLOWED_HOSTS_str = os.environ.get('DJANGO_ALLOWED_HOSTS')
+ALLOWED_HOSTS = ALLOWED_HOSTS_str.split(',') if ALLOWED_HOSTS_str else []
 
 INSTALLED_APPS = [
-    'usuario',
-    'tribunais',
-    'processo',
-    'movimentacao',
-    'parte',
-    'core',
-    "corsheaders",
-    'drf_yasg',
-    'rest_framework_simplejwt',
-    'rest_framework',
-    'django_extensions',
+    # Django Core 
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # Terceiros
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'drf_yasg',
+    'django_extensions',
+    'django_filters',
+    'corsheaders',
+
+    # Apps locais
+    'usuario',
+    'tribunais',
+    'processo',
+    'movimentacao',
+    'parte',
+    'core',
 ]
 
 # Middleware
@@ -35,6 +46,7 @@ INSTALLED_APPS = [
 AUTH_USER_MODEL = 'usuario.User'
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -49,6 +61,24 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'core.urls'
 STATIC_URL = '/static/'
 STATIC_ROOT = '/app/static'
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+]
+
+CORS_ALLOW_METHODS = [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "OPTIONS",
+]
+
+CORS_ALLOW_HEADERS = [
+    "authorization",
+    "content-type",
+]
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
@@ -133,20 +163,24 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.AllowAny',  
-    )
-
+        'rest_framework.permissions.AllowAny',
+    ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,  
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # tempo de validade do token de acesso
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),   # tempo de validade do token de refresh
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': False,
     'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,  # normalmente já é sua chave secreta do Django
+    'SIGNING_KEY': SECRET_KEY,
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+
+
 
 CACHES = {
     "default": {
@@ -161,4 +195,3 @@ CACHES = {
 }
 
 RATELIMIT_USE_CACHE = "default"
-

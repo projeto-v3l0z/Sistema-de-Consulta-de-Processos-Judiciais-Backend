@@ -1,14 +1,26 @@
-from .adapters import datajud, tjsp, tjrj
+# serviços para chegar nas APIs de fora
+from processo.adapters.datajud_adapter import DatajudAdapter
+from processo.adapters.tjsp_adapter import TjspAdapter
+from processo.adapters.trj_adapter import TrjAdapter
+from processo.dtos import ProcessoDTO
 
-def buscar_processo_com_fallback(numero_processo):
-    fontes = [
-        datajud.buscar_processo_datajud,
-        tjsp.buscar_processo_tjsp,
-        tjrj.buscar_processo_tjrj
-    ]
+ADAPTERS = {
+    "datajud": DatajudAdapter(),
+    "tjsp":   TjspAdapter(),
+    "trj":    TrjAdapter(),
+}
 
-    for fonte in fontes:
-        resultado = fonte(numero_processo)
-        if resultado:
-            return resultado
-    return None
+def get_processo(numero_processo: str, fonte: str):
+    adapter = ADAPTERS.get(fonte)
+    if not adapter:
+        raise ValueError(f"Fonte inválida: {fonte}")
+
+    raw = adapter.fetch_raw(numero_processo)
+    dto = adapter.to_standard_format(raw)
+    return dto
+
+def consultar_processos_por_documento(documento: str, fonte: str) -> list[ProcessoDTO]:
+    adapter = ADAPTERS.get(fonte)
+    if not adapter:
+        raise ValueError(f"Fonte inválida: {fonte}")
+    return adapter.consultar_por_documento(documento)

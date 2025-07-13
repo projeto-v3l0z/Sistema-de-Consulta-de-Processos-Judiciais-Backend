@@ -23,13 +23,8 @@ COPY . .
 
 COPY Docker/dev/.bashrc /home/v3loz/.bashrc
 
-
-
 USER v3loz
 
-
-
-# O comando padrão (pode ser sobrescrito no docker-compose)
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 
 EXPOSE 8000

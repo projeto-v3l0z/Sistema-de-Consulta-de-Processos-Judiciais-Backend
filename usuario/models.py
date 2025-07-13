@@ -34,10 +34,18 @@ class User(AbstractBaseUser, PermissionsMixin):
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
-    objects = UserManager()
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username', 'cpf']
+    REQUIRED_FIELDS = ['username']
+
+
+    objects = UserManager() # Movi esta linha para cima para melhor organização
+
+    objects = UserManager()
 
     def __str__(self):
-        return self.email
+        return f"{self.username} ({self.email})"
+
+    class Meta:
+        verbose_name = "Usuário"
+        verbose_name_plural = "Usuários"
