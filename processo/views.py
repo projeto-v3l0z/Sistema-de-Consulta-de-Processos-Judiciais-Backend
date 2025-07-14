@@ -4,10 +4,12 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
+from django.core.cache import cache
 from django.utils import timezone
 from django.db.models import Q
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+import logging
 import re
 from .models import Processo
 from .filters import ProcessoFilter
@@ -31,9 +33,11 @@ from integrations.tjsp_adapter import TJSPAdapter
 
 AUTH_ON = False
 
+logger = logging.getLogger(__name__)
+
 # List & Create com serialização padrão customizada
 class ProcessoListCreateView(generics.ListCreateAPIView):
-    queryset = Processo.objects.all()
+    queryset = Processo.objects.all().order_by('-created_at')
     serializer_class = ProcessoSerializer
     permission_classes = [AllowAny] if not AUTH_ON else [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
@@ -138,7 +142,7 @@ class MovimentacaoRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIVie
         return Movimentacao.objects.filter(processo_id=self.kwargs['processo_pk'])
 
 # Partes
-class ParteListView(generics.ListAPIView):
+class ParteListCreateView(generics.ListCreateAPIView):
     serializer_class = ParteSerializer
     def get_queryset(self):
         get_object_or_404(Processo, pk=self.kwargs['pk'])
@@ -253,6 +257,69 @@ class ProcessoBuscaDocumentoView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+# Busca por número de processo
+class ConsultaDatajudPorNumeroView(APIView):
+    """
+    Consulta um processo diretamente na API do DataJud pelo seu número.
+    O número do processo deve ter 20 dígitos, sem formatação.
+    """
+    permission_classes = [AllowAny] if not AUTH_ON else [IsAuthenticated]
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                'numero_processo',
+                openapi.IN_PATH,
+                description="Número do processo com 20 dígitos, sem formatação.",
+                type=openapi.TYPE_STRING,
+                required=True
+            )
+        ],
+        responses={
+            200: StandardProcessoSerializer,
+            400: "Número do processo em formato inválido.",
+            404: "Processo não encontrado na fonte de dados.",
+            503: "Serviço externo (DataJud) indisponível."
+        }
+    )
+    def get(self, request, numero_processo):
+        # Validação do formato 
+        if not re.fullmatch(r'\d{20}', numero_processo):
+            logger.warning(f"Tentativa de consulta com número de processo inválido: {numero_processo}")
+            return Response(
+                {'error': 'Formato de número de processo inválido. Deve conter 20 dígitos.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        cache_key = f"datajud_processo_{numero_processo}"
+        
+        # Tenta obter o resultado do cache
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            logger.info(f"Cache HIT para o processo {numero_processo}.")
+            return Response(cached_data, status=status.HTTP_200_OK)
+
+        logger.info(f"Cache MISS para o processo {numero_processo}. Consultando API externa.")
+
+        # Se não está no cache, chama a API do DataJud
+        try:
+            adapter = DatajudAdapter()
+            processo_data = adapter.consultar_por_numero(numero_processo)
+
+            if not processo_data:
+                logger.info(f"Processo {numero_processo} não encontrado no DataJud.")
+                return Response({'detail': 'Processo não encontrado na fonte de dados.'}, status=status.HTTP_404_NOT_FOUND)
+            
+            serializer = StandardProcessoSerializer(data=processo_data)
+            serializer.is_valid(raise_exception=True)
+
+            cache.set(cache_key, serializer.data, timeout=3600) # Cache por 1 hora
+            logger.info(f"Processo {numero_processo} consultado e salvo no cache.")
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error(f"Erro ao consultar DataJud para o processo {numero_processo}: {e}", exc_info=True)
+            return Response({'error': 'Serviço externo indisponível ou erro inesperado.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
 # Integrações externas
 class ConsultaDatajudNumeroView(APIView):
     def get(self, request):
@@ -277,3 +344,4 @@ class ConsultaTJSPDocumentoView(APIView):
         documento = request.query_params.get('documento')
         resultado = TJSPAdapter().consultar_por_documento(documento)
         return Response(resultado)
+

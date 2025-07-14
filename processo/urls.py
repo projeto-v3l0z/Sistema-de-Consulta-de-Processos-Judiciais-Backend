@@ -11,6 +11,7 @@ from .views import (
     ProcessoBuscaView,
     ProcessoBuscaDocumentoView,
     ConsultaDatajudNumeroView,
+    ConsultaDatajudPorNumeroView,
     ConsultaDatajudDocumentoView,
     ConsultaTJSPNumeroView,
     ConsultaTJSPDocumentoView,
@@ -37,6 +38,7 @@ urlpatterns = [
     path('busca-documento/', ProcessoBuscaDocumentoView.as_view(), name='processo-busca-documento'),
 
     # Integrações externas
+    path('datajud/<str:numero_processo>/', ConsultaDatajudPorNumeroView.as_view(), name='consulta-datajud-por-numero'),
     path('consulta-datajud/numero/', ConsultaDatajudNumeroView.as_view(), name='consulta-datajud-numero'),
     path('consulta-datajud/documento/', ConsultaDatajudDocumentoView.as_view(), name='consulta-datajud-documento'),
     path('consulta-tjsp/numero/', ConsultaTJSPNumeroView.as_view(), name='consulta-tjsp-numero'),
