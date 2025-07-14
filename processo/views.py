@@ -25,6 +25,8 @@ from django.db.utils import OperationalError
 import redis
 from django.core.cache import cache
 
+from .mapeamentos import CLASSES, MOVIMENTOS, FORMATOS
+
 # botei pra testar se lembra de mudar os permissoes depois quando tiver usuarios
 AUTH_ON = False
 
@@ -178,8 +180,18 @@ class ProcessoMovimentosView(APIView):
         for mov in result_page:
             movimentos.append({
                 "dataHora": mov.data_movimentacao,
-                #"nome": mov.nome,
+                #"nome": MOVIMENTOS.get(mov.codigo, mov.nome or 'Movimento não identificado'),
                 #"codigo": mov.codigo,
                 #"complementosTabelados": getattr(mov, 'complementos_tabelados', []) or []
             })
         return paginator.get_paginated_response(movimentos)
+
+
+class MapeamentosView(APIView):
+    # Endpoint para retornar os mapeamentos de classes, movimentos e formatos
+    def get(self, request):
+        return Response({
+            'classes': CLASSES,
+            'movimentos': MOVIMENTOS,
+            'formatos': FORMATOS
+        })

@@ -13,6 +13,7 @@ from .views import (
     ConsultaTJSPDocumentoView,
     HealthCheckView,
     ProcessoMovimentosView,
+    MapeamentosView
 
 )
 
@@ -34,6 +35,7 @@ urlpatterns = [
     path('consulta-tjsp/documento/', ConsultaTJSPDocumentoView.as_view(), name='consulta-tjsp-documento'),
     path('health/', HealthCheckView.as_view(), name='health-check'),
     path('<str:numero>/movimentos/', ProcessoMovimentosView.as_view(), name='processo-movimentos'),
+    path('mapeamentos/', MapeamentosView.as_view(), name='mapeamentos'),
 
     path('<uuid:pk>/', ProcessoRetrieveUpdateDestroyView.as_view(), name='processo-detail'),
    
