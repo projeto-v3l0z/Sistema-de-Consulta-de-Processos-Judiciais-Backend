@@ -42,18 +42,25 @@ Na raiz do projeto, crie um arquivo `.env` com o seguinte conteúdo:
 Esse arquivo deve conter as variáveis de ambiente que definem as configurações sensíveis, como usuário, senha e nome do banco, além da secret key do Django.
 
 ```env
-# Django
-DJANGO_SECRET_KEY= não esqueça de gerar a secret_key
+# ───── Django ─────
+DJANGO_SECRET_KEY=django-insecure-coloque_sua_chave_aqui
 DJANGO_DEBUG=True
 DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
 
-# Banco de Dados
-POSTGRES_DB= exemplo
-POSTGRES_USER= exemplo_user
-POSTGRES_PASSWORD= exemplo_password
+# ───── PostgreSQL ─────
+POSTGRES_DB=scpj
+POSTGRES_USER=scpj_user
+POSTGRES_PASSWORD=scpj_password
 POSTGRES_HOST=db
 POSTGRES_PORT=5432
+
+# ───── DataJud ─────
+DATAJUD_API_KEY=cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==
+DATAJUD_DEFAULT_TRIBUNAIS=api_publica_tjsp,api_publica_tjrj,api_publica_trf1
+DATAJUD_TIMEOUT=20
 ```
+
+caso a chave publica da api tenha mudado, pegue uma nova: https://datajud-wiki.cnj.jus.br/api-publica/acesso
 
 ## 🐳 Subindo o projeto com Docker
 
@@ -96,4 +103,15 @@ docker-compose up --build
 docker exec -it SCPJ_django bash
 ```
 
+**Consumir a API manualmente**
+```bash
+#entre no container
+docker exec -it SCPJ_django bash
+```
 
+```bash
+#dentro do contaienr rode
+python manage.py testa_datajud {numerodo processo}
+
+exemplo: python manage.py testa_datajud 00008323520184013202
+```
