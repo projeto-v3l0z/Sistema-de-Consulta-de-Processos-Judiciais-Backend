@@ -4,6 +4,8 @@ from .models import Processo
 class ProcessoSerializer(serializers.ModelSerializer):
     # Caso queira expor a descricao tambem
     situacao_atual_descricao = serializers.SerializerMethodField()
+    parte_nome = serializers.SerializerMethodField()
+    parte_cpf = serializers.SerializerMethodField()
 
     class Meta:
         model = Processo
@@ -19,6 +21,9 @@ class ProcessoSerializer(serializers.ModelSerializer):
             'situacao_atual',            
             'situacao_atual_descricao',  
             'ultima_atualizacao',
+            'parte_nome',
+            'parte_cpf',
+            'valor_causa',
         ]
 
     def get_situacao_atual_descricao(self, obj):
@@ -33,13 +38,6 @@ class StandardProcessoSerializer(serializers.Serializer):
     data_distribuicao = serializers.DateField()
     orgao_julgador    = serializers.CharField()
     situacao_atual    = serializers.CharField()
-
-# Isso é para a classe de movimentações na views
-class StandardMovimentacaoSerializer(serializers.Serializer):
-    data_movimentacao = serializers.DateTimeField()
-    descricao         = serializers.CharField()
-
-# Isso é para a classe de Partes
-class StandardParteSerializer(serializers.Serializer):
-    nome      = serializers.CharField()
-    documento = serializers.CharField()
+    parte_nome        = serializers.CharField()
+    parte_cpf         = serializers.CharField()
+    valor_causa       = serializers.CharField()

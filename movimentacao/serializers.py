@@ -15,3 +15,7 @@ class MovimentacaoSerializer(serializers.ModelSerializer):
             'updated_at',
         ]
         read_only_fields = ['id', 'processo', 'created_at', 'updated_at']
+
+class StandardMovimentacaoSerializer(serializers.Serializer):
+    data_movimentacao = serializers.DateTimeField()
+    descricao         = serializers.CharField()

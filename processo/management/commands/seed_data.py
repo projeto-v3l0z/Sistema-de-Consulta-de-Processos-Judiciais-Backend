@@ -1,98 +1,122 @@
+# processos/management/commands/seed_processos.py
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from django.contrib.auth import get_user_model
-
-# IMPORTS de cada app específico
-from processo.models import Processo
-from movimentacao.models import Movimentacao
-from parte.models import Parte
-from tribunais.models import Tribunal
-
+from django.db import transaction
 from faker import Faker
-import random
+import random, datetime
 
-fake = Faker("pt_BR")
+from processo.models import Processo, SituacaoProcesso
+faker = Faker("pt_BR")
+Faker.seed(42)
 
-User = get_user_model()
+# ────────────────────────────────────────────────────────────────
+# Utilidades para gerar um número CNJ “crível”
+# Ex.: 1234567-89.2024.8.26.0100 (TJ‑SP / Foro Central)
+# ────────────────────────────────────────────────────────────────
+def gerar_numero_cnj(ano=None, tribunal_cod="26", foro_cod="0100"):
+    """Gera um número CNJ no formato NNNNNNN-DD.AAAA.8.TT.FFFF."""
+    nnnnnnn = faker.random_int(1000000, 9999999)
+    dd = faker.random_int(10, 99)               # dígitos verificadores fake
+    ano = ano or faker.random_int(2018, timezone.now().year)
+    return f"{nnnnnnn}-{dd}.{ano}.8.{tribunal_cod}.{foro_cod}"
 
+# Alguns tribunais estaduais (TT) + códigos de foro (FFFF)
+TRIBUNAIS = {
+    "26": {  # TJ‑SP
+        "nome": "TJSP",
+        "foros": ["0100", "0638", "0000"]  # central, barra funda, genérico
+    },
+    "19": {  # TJ‑RJ
+        "nome": "TJRJ",
+        "foros": ["0001", "0002", "0003"]
+    },
+    "14": {  # TJ‑PA
+        "nome": "TJPA",
+        "foros": ["0301", "0501"]
+    },
+    "13": {  # TJ‑MG
+        "nome": "TJMG",
+        "foros": ["0001", "0080"]
+    },
+}
 
-def gerar_numero_processo():
-    nnnnnnn = str(random.randint(1000000, 9999999))
-    dd = str(random.randint(10, 99))
-    aaaa = str(random.randint(2000, timezone.now().year))
-    j = str(random.randint(1, 9))
-    tr = str(random.randint(10, 99))
-    oooo = str(random.randint(1000, 9999))
-    return f"{nnnnnnn}-{dd}.{aaaa}.{j}.{tr}.{oooo}"
+CLASSES = [
+    "Procedimento Comum Cível",
+    "Ação Penal",
+    "Ação Trabalhista",
+    "Execução Fiscal",
+    "Mandado de Segurança",
+]
 
+ASSUNTOS = [
+    "Direito do Consumidor",
+    "Responsabilidade Civil",
+    "Fundo de Garantia",
+    "Revisão de Benefícios",
+    "Fraude Bancária",
+    "Danos Morais",
+]
 
+ORGAOS = [
+    "1ª Vara Cível",
+    "2ª Vara Criminal",
+    "3ª Vara do Trabalho",
+    "Vara de Execuções Fiscais",
+    "Vara Única",
+]
+
+SITUACOES = [choice[0] for choice in SituacaoProcesso.choices]
+
+# ────────────────────────────────────────────────────────────────
+# Comando de seed
+# ────────────────────────────────────────────────────────────────
 class Command(BaseCommand):
-    help = "Popula o banco de dados com dados de exemplo"
+    help = "Popula a tabela Processo com dados realistas fictícios."
 
-    def handle(self, *args, **kwargs):
-        self.stdout.write(self.style.SUCCESS("Iniciando..."))
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--qtd",
+            type=int,
+            default=10000,
+            help="Quantidade de processos a gerar (padrão: 300).",
+        )
 
-        # Criar Tribunais
-        tribunais = []
-        for _ in range(5):
-            tribunal = Tribunal.objects.create(
-                sigla=fake.lexify(text="TR-??"),
-                nome=f"Tribunal de Justiça {fake.state_abbr()}",
-                estado=fake.state_abbr(),
-                api_endpoint=fake.url(),
-                api_tipo=random.choice(["REST", "SOAP"]),
+    @transaction.atomic
+    def handle(self, *args, **opts):
+        qtd = opts["qtd"]
+        criados = []
+        for _ in range(qtd):
+            # Tribunal e foro
+            tt, info = random.choice(list(TRIBUNAIS.items()))
+            foro = random.choice(info["foros"])
+
+            # Datas coerentes
+            data_dist = faker.date_between_dates(
+                date_start=datetime.date(2018, 1, 1),
+                date_end=timezone.now().date()
             )
-            tribunais.append(tribunal)
-
-        # Criar Usuários
-        usuarios = []
-        for i in range(5):
-            user = User.objects.create_user(
-                username=fake.user_name(),
-                email=fake.email(),
-                password="123456"
+            ultima_atual = faker.date_time_between_dates(
+                datetime_start=datetime.datetime.combine(data_dist, datetime.time.min),
+                datetime_end=timezone.now()
             )
-            usuarios.append(user)
 
-        # Criar Processos
-        processos = []
-        for i in range(50):
-            numero_processo = gerar_numero_processo()
-            processo = Processo.objects.create(
-                numero_processo=numero_processo,
-                tribunal=random.choice(tribunais).nome,  # se for FK, mude para .tribunal
-                classe_processual=fake.word(),
-                assunto=fake.sentence(nb_words=3),
-                data_distribuicao=fake.date_this_decade(),
-                orgao_julgador=fake.company(),
-                valor_causa=round(random.uniform(1000, 100000), 2),
-                situacao_atual=random.choice([s[0] for s in Processo.SITUACAO_CHOICES]),
-                ultima_atualizacao=timezone.now(),
-                usuario=random.choice(usuarios),
-            )
-            processos.append(processo)
-
-        # Criar Partes
-        for processo in processos:
-            qtd_partes = random.randint(1, 4)
-            for _ in range(qtd_partes):
-                Parte.objects.create(
-                    processo=processo,
-                    nome=fake.name(),
-                    tipo_parte=random.choice([tp[0] for tp in Parte.TIPO_PARTE_CHOICES]),
-                    documento=fake.cpf(),
+            criados.append(
+                Processo(
+                    numero_processo=gerar_numero_cnj(data_dist.year, tt, foro),
+                    tribunal=info["nome"],
+                    classe_processual=random.choice(CLASSES),
+                    assunto=random.choice(ASSUNTOS),
+                    data_distribuicao=data_dist,
+                    orgao_julgador=random.choice(ORGAOS),
+                    valor_causa=round(random.uniform(1_000, 500_000), 2),
+                    situacao_atual=random.choice(SITUACOES),
+                    ultima_atualizacao=ultima_atual,
+                    parte_nome=faker.name(),
+                    parte_cpf=faker.cpf(),      # já vem formatado 000.000.000‑00
                 )
+            )
 
-        # Criar Movimentações
-        for processo in processos:
-            qtd_mov = random.randint(2, 6)
-            for _ in range(qtd_mov):
-                Movimentacao.objects.create(
-                    processo=processo,
-                    data_movimentacao=fake.date_time_this_year(),
-                    tipo_movimentacao=fake.word(),
-                    descricao=fake.sentence(nb_words=10),
-                    responsavel=fake.name(),
-                )
-
-        self.stdout.write(self.style.SUCCESS("Dados criados com sucesso."))
+        Processo.objects.bulk_create(criados)
+        self.stdout.write(
+            self.style.SUCCESS(f"{len(criados)} processos fictícios inseridos com sucesso!")
+        )
