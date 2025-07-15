@@ -85,6 +85,16 @@ Após o Docker subir os serviços, acesse no navegador:
 - Projeto: http://localhost:8000  
 - Documentação Swagger: http://localhost:8000/swagger/  
 
+## Caso não consiga verifcar os dados vindos da api
+
+```bash
+docker exec -it SCPJ_django bash
+```
+
+```bash
+python manage.py seed_data
+```
+
 ## 🧠 Comandos úteis
 
 **Parar os containers:**
