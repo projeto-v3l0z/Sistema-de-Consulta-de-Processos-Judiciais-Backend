@@ -257,12 +257,9 @@ class ProcessoBuscaDocumentoView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-# Busca por número de processo
+# Busca por número de processo (consulta DataJud)
 class ConsultaDatajudPorNumeroView(APIView):
-    """
-    Consulta um processo diretamente na API do DataJud pelo seu número.
-    O número do processo deve ter 20 dígitos, sem formatação.
-    """
+
     permission_classes = [AllowAny] if not AUTH_ON else [IsAuthenticated]
 
     @swagger_auto_schema(

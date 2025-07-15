@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'processo',
     'movimentacao',
     'parte',
+    'notificacao',
     'core',
 ]
 
